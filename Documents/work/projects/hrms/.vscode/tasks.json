@@ -1,0 +1,18 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Jest tests for frontend",
+			"type": "shell",
+			"command": "npx jest --config frontend/jest.config.js --runInBand",
+			"args": [
+				"frontend/src/views/modules/training_management/TrainingProgramList.test.jsx"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$jest-stylish"
+			],
+			"group": "test"
+		}
+	]
+}
