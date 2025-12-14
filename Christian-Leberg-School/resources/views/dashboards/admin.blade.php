@@ -35,6 +35,12 @@
                                 <span class="text-gray-400 group-hover:text-gray-600">&rarr;</span>
                             </a>
                         </li>
+                        <li>
+                            <a href="{{ route('exams.index') }}" class="block p-3 rounded-md bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium flex justify-between items-center group">
+                                Examinations
+                                <span class="text-gray-400 group-hover:text-gray-600">&rarr;</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
 

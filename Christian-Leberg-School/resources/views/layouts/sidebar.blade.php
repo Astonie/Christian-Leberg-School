@@ -60,6 +60,9 @@
             <a href="{{ route('subjects.index') }}" class="flex items-center px-4 py-2 rounded-lg transition-colors duration-200 {{ request()->routeIs('subjects*') ? 'bg-indigo-700 text-white' : 'text-indigo-200 hover:bg-indigo-800 hover:text-white' }}">
                 <span class="font-medium ml-8">Subjects</span>
             </a>
+            <a href="{{ route('exams.index') }}" class="flex items-center px-4 py-2 rounded-lg transition-colors duration-200 {{ request()->routeIs('exams*') ? 'bg-indigo-700 text-white' : 'text-indigo-200 hover:bg-indigo-800 hover:text-white' }}">
+                <span class="font-medium ml-8">Examinations</span>
+            </a>
         @endif
 
     </nav>
