@@ -6,6 +6,7 @@ use App\Models\Exam;
 use App\Models\ExamResult;
 use App\Models\Student;
 use App\Models\Subject;
+use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -13,8 +14,12 @@ class ExamResultController extends Controller
 {
     public function create(Exam $exam)
     {
-        // List all students for now (could be filtered by class/stream)
-        $students = Student::with('user')->get();
+        // List only students enrolled in the exam's academic year
+        $students = Student::with(['user', 'streams' => function ($q) use ($exam) {
+            $q->wherePivot('academic_year_id', $exam->academic_year_id)->wherePivot('is_active', true);
+        }])->whereHas('streams', function ($q) use ($exam) {
+            $q->wherePivot('academic_year_id', $exam->academic_year_id)->wherePivot('is_active', true);
+        })->get();
         $subjects = Subject::all();
 
         return view('exams.results.create', compact('exam', 'students', 'subjects'));
@@ -25,7 +30,13 @@ class ExamResultController extends Controller
         $data = $request->validate([
             'subject_id' => ['required', 'exists:subjects,id'],
             'results' => ['required', 'array'],
-            'results.*.student_id' => ['required', 'exists:students,id'],
+            'results.*.student_id' => [
+                'required',
+                // Ensure the student is enrolled in the same academic year as the exam
+                Rule::exists('student_stream', 'student_id')->where(function ($query) use ($exam) {
+                    $query->where('academic_year_id', $exam->academic_year_id)->where('is_active', true);
+                }),
+            ],
             'results.*.marks' => ['required', 'numeric', 'min:0'],
         ]);
 
