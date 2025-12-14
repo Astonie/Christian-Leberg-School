@@ -3,42 +3,26 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\ExamType;
-use App\Models\Subject;
-use App\Models\SchoolClass;
-use App\Models\Term;
-use App\Models\ExamMark;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Exam extends Model
 {
+    use SoftDeletes;
+
     protected $guarded = [];
 
     protected $casts = [
-        'exam_date' => 'date',
+        'start_date' => 'date',
+        'end_date' => 'date',
     ];
 
-    public function examType()
+    public function academicYear()
     {
-        return $this->belongsTo(ExamType::class);
+        return $this->belongsTo(AcademicYear::class);
     }
 
-    public function subject()
+    public function results()
     {
-        return $this->belongsTo(Subject::class);
-    }
-
-    public function class()
-    {
-        return $this->belongsTo(SchoolClass::class, 'class_id');
-    }
-
-    public function term()
-    {
-        return $this->belongsTo(Term::class);
-    }
-
-    public function marks()
-    {
-        return $this->hasMany(ExamMark::class);
+        return $this->hasMany(ExamResult::class);
     }
 }

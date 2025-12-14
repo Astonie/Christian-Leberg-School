@@ -15,10 +15,24 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('attendance.index')" :active="request()->routeIs('attendance.*')">
+                        {{ __('Attendance') }}
+                    </x-nav-link>
                 </div>
             </div>
 
-            <!-- Settings Dropdown -->
+            @if(Auth::user()->hasRole('admin'))
+        <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+             <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                {{ __('Users') }}
+            </x-nav-link>
+             <x-nav-link :href="route('guardians.index')" :active="request()->routeIs('guardians.*')">
+                {{ __('Guardians') }}
+            </x-nav-link>
+        </div>
+    @endif
+    
+    <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6">
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
@@ -69,6 +83,9 @@
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('attendance.index')" :active="request()->routeIs('attendance.*')">
+                {{ __('Attendance') }}
             </x-responsive-nav-link>
         </div>
 

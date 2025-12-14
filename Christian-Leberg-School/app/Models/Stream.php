@@ -12,7 +12,7 @@ class Stream extends Model
 {
     protected $guarded = [];
 
-    public function class()
+    public function schoolClass()
     {
         return $this->belongsTo(SchoolClass::class, 'class_id');
     }

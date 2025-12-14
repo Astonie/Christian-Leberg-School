@@ -11,7 +11,7 @@ class SchoolClass extends Model
 
     public function streams()
     {
-        return $this->hasMany(Stream::class);
+        return $this->hasMany(Stream::class, 'class_id');
     }
 
     public function subjects()

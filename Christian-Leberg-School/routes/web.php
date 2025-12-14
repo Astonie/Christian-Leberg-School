@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -20,6 +21,10 @@ Route::post('logout', [AuthController::class, 'logout'])->middleware('auth')->na
 
 // Role-based Dashboards
 Route::middleware(['auth'])->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
     // Admin Routes
@@ -39,6 +44,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Student Management (Admin/Teacher only typically, but we'll protect in controller or middleware)
     Route::middleware('role:admin')->group(function () {
+        Route::resource('users', \App\Http\Controllers\UserController::class)->except(['show', 'create', 'store']); 
+        Route::resource('guardians', \App\Http\Controllers\GuardianController::class);
         Route::resource('students', \App\Http\Controllers\StudentController::class);
         Route::resource('academic-years', \App\Http\Controllers\AcademicYearController::class);
         Route::resource('classes', \App\Http\Controllers\SchoolClassController::class);
@@ -47,4 +54,10 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('teachers', \App\Http\Controllers\TeacherController::class);
         Route::resource('teachers.subjects', \App\Http\Controllers\TeacherSubjectController::class)->only(['index', 'store', 'destroy']);
     });
+
+    // Attendance Routes (Accessible by Admin and Teachers)
+    // In a real app, use a middleware like 'role:admin|teacher' or policy. For now, auth is fine as we are inside auth group.
+    Route::get('attendance/mark', [\App\Http\Controllers\AttendanceController::class, 'create'])->name('attendance.create'); 
+    Route::resource('attendance', \App\Http\Controllers\AttendanceController::class)->except(['create', 'show', 'edit', 'update', 'destroy']);
+
 });
