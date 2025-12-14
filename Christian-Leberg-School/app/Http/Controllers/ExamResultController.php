@@ -26,7 +26,7 @@ class ExamResultController extends Controller
             'subject_id' => ['required', 'exists:subjects,id'],
             'results' => ['required', 'array'],
             'results.*.student_id' => ['required', 'exists:students,id'],
-            'results.*.marks' => ['nullable', 'numeric', 'min:0'],
+            'results.*.marks' => ['required', 'numeric', 'min:0'],
         ]);
 
         DB::transaction(function () use ($exam, $data) {
@@ -35,7 +35,7 @@ class ExamResultController extends Controller
 
                 ExamResult::updateOrCreate(
                     ['exam_id' => $exam->id, 'student_id' => $item['student_id'], 'subject_id' => $subjectId],
-                    ['marks' => $item['marks'] ?? null, 'subject_id' => $subjectId]
+                    ['marks' => (int) ($item['marks'] ?? 0), 'subject_id' => $subjectId]
                 );
             }
         });

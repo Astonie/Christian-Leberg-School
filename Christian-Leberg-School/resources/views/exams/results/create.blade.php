@@ -30,7 +30,10 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $student->user->name }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <input type="hidden" name="results[{{ $loop->index }}][student_id]" value="{{ $student->id }}">
-                                            <input type="number" name="results[{{ $loop->index }}][marks]" class="border rounded px-2 py-1 w-24" min="0">
+                                            <input type="number" name="results[{{ $loop->index }}][marks]" class="border rounded px-2 py-1 w-24" min="0" required>
+                                            @error("results.$loop->index.marks")
+                                                <div class="text-sm text-red-600 mt-1">{{ $message }}</div>
+                                            @enderror
                                         </td>
                                     </tr>
                                 @endforeach
