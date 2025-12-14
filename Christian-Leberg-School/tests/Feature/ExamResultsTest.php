@@ -157,5 +157,9 @@ class ExamResultsTest extends TestCase
         // PDF endpoint - may return HTML if Dompdf not present; at least ensure 200
         $pdfResp = $this->actingAs($admin)->get(route('exams.report.pdf', [$exam, $class]));
         $pdfResp->assertStatus(200);
+
+        // Student report card PDF
+        $stuPdf = $this->actingAs($admin)->get(route('exams.student.report.pdf', [$exam, $student]));
+        $stuPdf->assertStatus(200);
     }
 }

@@ -116,4 +116,33 @@ class ExamController extends Controller
         // Fallback: return HTML
         return response($html);
     }
+
+    public function studentReportPdf(Exam $exam, Student $student)
+    {
+        // Authorization: admin or the student themselves or class teacher
+        $user = auth()->user();
+        if (! $user->hasRole('admin') && $user->id !== $student->user_id) {
+            // allow teacher if they teach any subject the student has for this exam
+            $teacherOk = $user->teacher && $student->examResults()->where('exam_id', $exam->id)->whereIn('subject_id', $user->teacher->subjects()->pluck('subjects.id'))->exists();
+            if (! $teacherOk) abort(403);
+        }
+
+        $results = $student->examResults()->where('exam_id', $exam->id)->with('subject')->get();
+        $total = $results->sum('marks');
+        $average = $results->avg('marks');
+
+        $data = compact('exam', 'student', 'results', 'total', 'average');
+
+        $html = view('exams.student_report', $data)->render();
+
+        if (class_exists(\Dompdf\Dompdf::class)) {
+            $dompdf = new \Dompdf\Dompdf();
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->render();
+            return response($dompdf->output(), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="report_'.$student->id.'_exam_'.$exam->id.'.pdf"']);
+        }
+
+        return response($html);
+    }
 }

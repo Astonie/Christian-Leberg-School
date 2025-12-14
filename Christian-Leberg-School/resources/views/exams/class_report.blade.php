@@ -32,6 +32,9 @@
                                     </td>
                                     <td class="px-6 py-4">{{ number_format($stu->examResults()->where('exam_id', $exam->id)->avg('marks') ?? 0, 2) }}</td>
                                     <td class="px-6 py-4">{{ optional($stu->examResults()->where('exam_id', $exam->id)->first())->grade ?? '-' }}</td>
+                                    <td class="px-6 py-4">
+                                        <a href="{{ route('exams.student.report.pdf', [$exam, $stu]) }}" class="px-2 py-1 bg-indigo-600 text-white rounded">Download</a>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
