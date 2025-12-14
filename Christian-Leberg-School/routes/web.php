@@ -25,6 +25,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [DashboardController::class, 'admin']);
     });
 
+        // Exams (Admin)
+        Route::middleware('role:admin')->group(function () {
+            Route::resource('exams', \App\Http\Controllers\ExamController::class);
+        });
+
     // Teacher Routes
     Route::middleware('role:teacher')->prefix('teacher')->name('dashboard.teacher')->group(function () {
         Route::get('/', [DashboardController::class, 'teacher']);
