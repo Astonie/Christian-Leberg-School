@@ -40,4 +40,37 @@ class ExamController extends Controller
         $exam->load('results.student', 'academicYear');
         return view('exams.show', compact('exam'));
     }
+
+    public function report(Exam $exam)
+    {
+        // Students with insufficient subjects
+        $insufficient = $exam->studentsWithInsufficientSubjects(4);
+        $sufficient = $exam->studentsWithSufficientSubjects(4);
+
+        // Prepare summary data for students with sufficient subjects
+        $report = $sufficient->map(function ($student) use ($exam) {
+            $results = $student->examResults()->where('exam_id', $exam->id)->with('subject')->get();
+            $total = $results->sum('marks');
+            $average = $results->avg('marks');
+            // Use simple average to compute overall grade
+            $grade = null;
+            if ($average !== null) {
+                if ($average >= 80) $grade = 'A';
+                elseif ($average >= 70) $grade = 'B';
+                elseif ($average >= 60) $grade = 'C';
+                elseif ($average >= 50) $grade = 'D';
+                else $grade = 'E';
+            }
+
+            return [
+                'student' => $student,
+                'results' => $results,
+                'total' => $total,
+                'average' => $average,
+                'grade' => $grade,
+            ];
+        });
+
+        return view('exams.report', compact('exam', 'insufficient', 'report'));
+    }
 }

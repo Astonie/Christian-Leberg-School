@@ -28,6 +28,7 @@ Route::middleware(['auth'])->group(function () {
         // Exams (Admin)
         Route::middleware('role:admin')->group(function () {
             Route::resource('exams', \App\Http\Controllers\ExamController::class);
+            Route::get('exams/{exam}/report', [\App\Http\Controllers\ExamController::class, 'report'])->name('exams.report');
             Route::get('exams/{exam}/results/create', [\App\Http\Controllers\ExamResultController::class, 'create'])->name('exams.results.create');
             Route::post('exams/{exam}/results', [\App\Http\Controllers\ExamResultController::class, 'store'])->name('exams.results.store');
             Route::get('exams/{exam}/results', [\App\Http\Controllers\ExamResultController::class, 'index'])->name('exams.results.index');

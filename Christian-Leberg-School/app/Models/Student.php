@@ -35,6 +35,11 @@ class Student extends Model
                     ->withTimestamps();
     }
 
+    public function examResults()
+    {
+        return $this->hasMany(ExamResult::class);
+    }
+
     public function activeStreams()
     {
         return $this->streams()->wherePivot('is_active', true)->latest('pivot_enrollment_date');

@@ -83,4 +83,46 @@ class ExamResultsTest extends TestCase
         $response->assertSessionHasErrors(['results.0.student_id']);
         $this->assertDatabaseMissing('exam_results', ['exam_id' => $exam->id, 'student_id' => $student->id]);
     }
+
+    public function test_report_shows_insufficient_students_and_reports_for_complete_ones()
+    {
+        Role::create(['name' => 'Admin', 'slug' => 'admin']);
+        $admin = User::factory()->create(['role_id' => Role::where('slug', 'admin')->first()->id]);
+
+        $year = AcademicYear::create(['name' => '2025', 'start_date' => '2025-01-01', 'end_date' => '2025-12-31', 'is_active' => true]);
+        $exam = Exam::create(['academic_year_id' => $year->id, 'name' => 'Full Exam', 'term' => 'Term 1', 'start_date' => '2025-06-01', 'end_date' => '2025-06-02']);
+
+        // Create two students: one complete (4 subjects), one incomplete (2 subjects)
+        $subj1 = \App\Models\Subject::create(['name' => 'S1', 'code' => 'S1']);
+        $subj2 = \App\Models\Subject::create(['name' => 'S2', 'code' => 'S2']);
+        $subj3 = \App\Models\Subject::create(['name' => 'S3', 'code' => 'S3']);
+        $subj4 = \App\Models\Subject::create(['name' => 'S4', 'code' => 'S4']);
+
+        $userA = User::factory()->create(['role_id' => Role::where('slug','student')->first()->id]);
+        $studentA = Student::create(['user_id'=>$userA->id,'admission_number'=>'A1','admission_date'=>now(),'date_of_birth'=>now()->subYears(12),'gender'=>'male']);
+
+        $userB = User::factory()->create(['role_id' => Role::where('slug','student')->first()->id]);
+        $studentB = Student::create(['user_id'=>$userB->id,'admission_number'=>'B1','admission_date'=>now(),'date_of_birth'=>now()->subYears(12),'gender'=>'male']);
+
+        $class = \App\Models\SchoolClass::create(['name'=>'Grade X','level'=>1]);
+        $stream = \App\Models\Stream::create(['name'=>'A','class_id'=>$class->id,'academic_year_id'=>$year->id]);
+        $studentA->streams()->attach($stream->id,['academic_year_id'=>$year->id,'enrollment_date'=>now(),'is_active'=>true]);
+        $studentB->streams()->attach($stream->id,['academic_year_id'=>$year->id,'enrollment_date'=>now(),'is_active'=>true]);
+
+        // Student A: 4 subjects
+        foreach ([$subj1,$subj2,$subj3,$subj4] as $s) {
+            ExamResult::create(['exam_id'=>$exam->id,'student_id'=>$studentA->id,'subject_id'=>$s->id,'marks'=>80]);
+        }
+
+        // Student B: 2 subjects
+        foreach ([$subj1,$subj2] as $s) {
+            ExamResult::create(['exam_id'=>$exam->id,'student_id'=>$studentB->id,'subject_id'=>$s->id,'marks'=>70]);
+        }
+
+        $response = $this->actingAs($admin)->get(route('exams.report', $exam));
+        $response->assertStatus(200);
+        $response->assertSee('Students with insufficient subjects');
+        $response->assertSee($studentB->user->name);
+        $response->assertSee($studentA->user->name);
+    }
 }
