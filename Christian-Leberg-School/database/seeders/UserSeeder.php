@@ -92,12 +92,21 @@ class UserSeeder extends Seeder
                 $student = Student::create([
                     'user_id' => $user->id,
                     'admission_number' => "ADM" . str_pad($i, 4, '0', STR_PAD_LEFT),
+                    'admission_date' => Carbon::now()->subYears(1), // Admitted last year
                     'date_of_birth' => Carbon::now()->subYears(6 + $stream->schoolClass->level), // Approximate age
                     'gender' => $i % 2 == 0 ? 'male' : 'female',
-                    'current_stream_id' => $stream->id,
+                    // 'current_stream_id' removed as it doesn't exist on students table
                 ]);
+                
                 $user->profile()->associate($student);
                 $user->save();
+
+                // Assign to Stream
+                $student->streams()->attach($stream->id, [
+                    'academic_year_id' => $stream->academic_year_id, // Use stream's year or current active year
+                    'enrollment_date' => Carbon::now()->subMonths(1),
+                    'is_active' => true,
+                ]);
             }
         }
     }
