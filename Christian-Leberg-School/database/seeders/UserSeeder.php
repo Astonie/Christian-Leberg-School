@@ -19,94 +19,89 @@ class UserSeeder extends Seeder
     {
         $password = Hash::make('password');
         
-        // 1. Admin
-        $adminRole = Role::where('slug', 'admin')->first();
-        User::firstOrCreate(
-            ['email' => 'admin@school.com'],
-            [
-                'name' => 'Super Admin',
-                'password' => $password,
-                'role_id' => $adminRole->id,
-            ]
-        );
-
-        // 2. Teachers (Create 5 teachers)
-        $teacherRole = Role::where('slug', 'teacher')->first();
-        $subjects = Subject::all();
-        $academicYear = AcademicYear::where('is_active', true)->first();
-
-        // Create 5 teachers
-        for ($i = 1; $i <= 5; $i++) {
-            $user = User::firstOrCreate(
-                ['email' => "teacher$i@school.com"],
+            // 1. Admin
+            $adminRole = Role::where('slug', 'admin')->first();
+            User::firstOrCreate(
+                ['email' => 'admin@school.com'],
                 [
-                    'name' => "Teacher $i",
+                    'name' => 'Super Admin',
                     'password' => $password,
-                    'role_id' => $teacherRole->id,
+                    'role_id' => $adminRole->id,
                 ]
             );
 
-            if (!$user->profile) {
-                $teacher = Teacher::create([
-                    'user_id' => $user->id,
-                    'employee_number' => "TCH" . str_pad($i, 3, '0', STR_PAD_LEFT),
-                    'hire_date' => Carbon::now()->subMonths($i * 6),
-                    'phone_number' => "0801234567$i",
-                    'qualification' => 'B.Ed',
-                    'employment_type' => 'full-time',
-                ]);
-                $user->profile()->associate($teacher);
-                $user->save();
+            // 2. Teachers (Create 5 teachers)
+            $teacherRole = Role::where('slug', 'teacher')->first();
+            $subjects = Subject::all();
+            $academicYear = AcademicYear::where('is_active', true)->first();
 
-                // Assign random subjects
-                if ($subjects->count() > 0) {
-                     $teacher->subjects()->sync($subjects->random(2)->pluck('id'));
+            // Create 5 teachers
+            for ($i = 1; $i <= 5; $i++) {
+                $user = User::firstOrCreate(
+                    ['email' => "teacher$i@school.com"],
+                    [
+                        'name' => "Teacher $i",
+                        'password' => $password,
+                        'role_id' => $teacherRole->id,
+                    ]
+                );
+
+                if (!$user->profile) {
+                    $teacher = Teacher::create([
+                        'user_id' => $user->id,
+                        'employee_number' => "TCH" . str_pad($i, 3, '0', STR_PAD_LEFT),
+                        'hire_date' => Carbon::now()->subMonths($i * 6),
+                        'phone_number' => "0801234567$i",
+                        'qualification' => 'B.Ed',
+                        'employment_type' => 'full-time',
+                    ]);
+                    $user->profile()->associate($teacher);
+                    $user->save();
+
+                    // Assign random subjects
+                    if ($subjects->count() > 0) {
+                        $teacher->subjects()->sync($subjects->random(2)->pluck('id'));
+                    }
                 }
-                
-                // Assign as Class Teacher to a random stream if available and not taken
-                 // Simple logic: If $i <= count(streams), assign.
-                 // Fetch all streams
-                 // We will skip complex logic here for brevity, standard manual assignment is fine for now, 
-                 // or we can randomly assign if we want richness.
             }
-        }
 
-        // 3. Students (Create 20 students)
-        $studentRole = Role::where('slug', 'student')->first();
-        $streams = Stream::with('schoolClass')->get();
+            // 3. Students (Create 20 students)
+            $studentRole = Role::where('slug', 'student')->first();
+            $streams = Stream::with('schoolClass')->get();
 
-        for ($i = 1; $i <= 20; $i++) {
-            $user = User::firstOrCreate(
-                ['email' => "student$i@school.com"],
-                [
-                    'name' => "Student $i",
-                    'password' => $password,
-                    'role_id' => $studentRole->id,
-                ]
-            );
+            for ($i = 1; $i <= 20; $i++) {
+                $user = User::firstOrCreate(
+                    ['email' => "student$i@school.com"],
+                    [
+                        'name' => "Student $i",
+                        'password' => $password,
+                        'role_id' => $studentRole->id,
+                    ]
+                );
 
-            if (!$user->profile) {
-                // Pick a random stream
-                $stream = $streams->random();
-                
-                $student = Student::create([
-                    'user_id' => $user->id,
-                    'admission_number' => "ADM" . str_pad($i, 4, '0', STR_PAD_LEFT),
-                    'admission_date' => Carbon::now()->subYears(1), // Admitted last year
-                    'date_of_birth' => Carbon::now()->subYears(6 + $stream->schoolClass->level), // Approximate age
-                    'gender' => $i % 2 == 0 ? 'male' : 'female',
-                    // 'current_stream_id' removed as it doesn't exist on students table
-                ]);
-                
-                $user->profile()->associate($student);
-                $user->save();
+                if (!$user->profile) {
+                    // Pick a random stream
+                    $stream = $streams->random();
+                    
+                    $student = Student::create([
+                        'user_id' => $user->id,
+                        'admission_number' => "ADM" . str_pad($i, 4, '0', STR_PAD_LEFT),
+                        'admission_date' => Carbon::now()->subYears(1), // Admitted last year
+                        'date_of_birth' => Carbon::now()->subYears(6 + $stream->schoolClass->level), // Approximate age
+                        'gender' => $i % 2 == 0 ? 'male' : 'female',
+                        // 'current_stream_id' removed as it doesn't exist on students table
+                    ]);
+                    
+                    $user->profile()->associate($student);
+                    $user->save();
 
-                // Assign to Stream
-                $student->streams()->attach($stream->id, [
-                    'academic_year_id' => $stream->academic_year_id, // Use stream's year or current active year
-                    'enrollment_date' => Carbon::now()->subMonths(1),
-                    'is_active' => true,
-                ]);
+                    // Assign to Stream
+                    $student->streams()->attach($stream->id, [
+                        'academic_year_id' => $stream->academic_year_id, // Use stream's year or current active year
+                        'enrollment_date' => Carbon::now()->subMonths(1),
+                        'is_active' => true,
+                    ]);
+                }
             }
         }
     }
