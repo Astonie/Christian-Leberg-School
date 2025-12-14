@@ -40,8 +40,10 @@ class ExamResultsTest extends TestCase
 
         $user = User::factory()->create(['role_id' => Role::where('slug', 'student')->first()->id ?? Role::create(['name'=>'Student','slug'=>'student'])->id]);
         $student = Student::create(['user_id' => $user->id, 'admission_number' => 'ADM100', 'admission_date' => now(), 'date_of_birth' => now()->subYears(12), 'gender' => 'male']);
+        $subject = \App\Models\Subject::create(['name' => 'Mathematics', 'code' => 'MATH101']);
 
         $response = $this->actingAs($admin)->post(route('exams.results.store', $exam), [
+            'subject_id' => $subject->id,
             'results' => [
                 ['student_id' => $student->id, 'marks' => 85],
             ],

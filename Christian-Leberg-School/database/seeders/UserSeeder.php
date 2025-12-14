@@ -35,6 +35,16 @@ class UserSeeder extends Seeder
             $subjects = Subject::all();
             $academicYear = AcademicYear::where('is_active', true)->first();
 
+            // Ensure there's an active academic year for pivot relations
+            if (! $academicYear) {
+                $academicYear = AcademicYear::create([
+                    'name' => date('Y'),
+                    'start_date' => now()->startOfYear()->toDateString(),
+                    'end_date' => now()->endOfYear()->toDateString(),
+                    'is_active' => true,
+                ]);
+            }
+
             // Create 5 teachers
             for ($i = 1; $i <= 5; $i++) {
                 $user = User::firstOrCreate(
@@ -57,9 +67,14 @@ class UserSeeder extends Seeder
                     ]);
                     // user_id already set on teacher
 
-                    // Assign random subjects
+                    // Assign random subjects for the active academic year
                     if ($subjects->count() > 0) {
-                        $teacher->subjects()->sync($subjects->random(2)->pluck('id'));
+                        $picked = $subjects->random(2)->pluck('id');
+                        $sync = collect($picked)->mapWithKeys(function ($id) use ($academicYear) {
+                            return [$id => ['academic_year_id' => $academicYear->id, 'is_primary' => false]];
+                        })->toArray();
+
+                        $teacher->subjects()->sync($sync);
                     }
                 }
             }
@@ -103,4 +118,4 @@ class UserSeeder extends Seeder
             }
         }
     }
-}
+
