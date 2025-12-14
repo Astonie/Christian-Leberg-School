@@ -39,8 +39,6 @@ class TeacherManagementTest extends TestCase
             'qualification' => 'B.Ed',
             'employment_type' => 'full-time',
         ]);
-        $user->profile()->associate($teacher);
-        $user->save();
 
         $response = $this->actingAs($this->admin)->get(route('teachers.index'));
         $response->assertStatus(200);
@@ -67,8 +65,8 @@ class TeacherManagementTest extends TestCase
         $this->assertDatabaseHas('teachers', ['employee_number' => 'TCH001']);
         
         $user = User::where('email', 'john.smith@school.com')->first();
-        $this->assertNotNull($user->profile);
-        $this->assertEquals('TCH001', $user->profile->employee_number);
+        $this->assertNotNull($user->teacher);
+        $this->assertEquals('TCH001', $user->teacher->employee_number);
     }
 
     public function test_admin_can_update_teacher()
@@ -84,8 +82,6 @@ class TeacherManagementTest extends TestCase
             'qualification' => 'B.Ed',
             'employment_type' => 'contract',
         ]);
-        $user->profile()->associate($teacher);
-        $user->save();
 
         $response = $this->actingAs($this->admin)->put(route('teachers.update', $teacher), [
             'first_name' => 'Jane',

@@ -48,7 +48,7 @@ class AttendanceController extends Controller
         $data = $request->validated();
         $streamId = $data['stream_id'];
         $date = $data['date'];
-        $teacherId = Auth::user()->hasRole('teacher') ? Auth::user()->profile->id : null;
+        $teacherId = Auth::user()->hasRole('teacher') ? optional(Auth::user()->teacher)->id : null;
 
         foreach ($data['attendance'] as $record) {
             AttendanceRecord::updateOrCreate(

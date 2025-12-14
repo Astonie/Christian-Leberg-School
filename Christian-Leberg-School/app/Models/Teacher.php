@@ -17,7 +17,7 @@ class Teacher extends Model
 
     public function user()
     {
-        return $this->morphOne(User::class, 'profile');
+        return $this->belongsTo(User::class);
     }
 
     public function subjects()

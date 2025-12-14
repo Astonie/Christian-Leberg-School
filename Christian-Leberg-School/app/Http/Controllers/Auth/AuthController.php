@@ -79,6 +79,6 @@ class AuthController extends Controller
             return route('dashboard.guardian');
         }
 
-        return route('dashboard.student'); // Fallback
+        return route('dashboard'); // Fallback to central dashboard
     }
 }

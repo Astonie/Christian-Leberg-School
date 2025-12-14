@@ -72,7 +72,7 @@
             </div>
             <div class="ml-3">
                 <p class="text-sm font-medium text-white">{{ auth()->user()->name }}</p>
-                <p class="text-xs text-indigo-300">{{ auth()->user()->role->name }}</p>
+                <p class="text-xs text-indigo-300">{{ auth()->user()->role?->name ?? 'User' }}</p>
             </div>
         </div>
     </div>

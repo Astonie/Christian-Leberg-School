@@ -54,9 +54,6 @@ class TeacherController extends Controller
             
             $teacher = Teacher::create($teacherData);
             
-            $user->profile()->associate($teacher);
-            $user->save();
-            
             // TODO: Dispatch event to send welcome email with password
         });
 

@@ -46,7 +46,7 @@ class UserSeeder extends Seeder
                     ]
                 );
 
-                if (!$user->profile) {
+                if (!$user->teacher) {
                     $teacher = Teacher::create([
                         'user_id' => $user->id,
                         'employee_number' => "TCH" . str_pad($i, 3, '0', STR_PAD_LEFT),
@@ -55,8 +55,7 @@ class UserSeeder extends Seeder
                         'qualification' => 'B.Ed',
                         'employment_type' => 'full-time',
                     ]);
-                    $user->profile()->associate($teacher);
-                    $user->save();
+                    // user_id already set on teacher
 
                     // Assign random subjects
                     if ($subjects->count() > 0) {
@@ -79,7 +78,7 @@ class UserSeeder extends Seeder
                     ]
                 );
 
-                if (!$user->profile) {
+                if (!$user->student) {
                     // Pick a random stream
                     $stream = $streams->random();
                     
@@ -92,8 +91,7 @@ class UserSeeder extends Seeder
                         // 'current_stream_id' removed as it doesn't exist on students table
                     ]);
                     
-                    $user->profile()->associate($student);
-                    $user->save();
+                    // user_id already set on student
 
                     // Assign to Stream
                     $student->streams()->attach($stream->id, [

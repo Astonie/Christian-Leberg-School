@@ -75,9 +75,6 @@ class GuardianController extends Controller
                 'occupation' => $request->occupation,
             ]);
 
-            $user->profile()->associate($guardian);
-            $user->save();
-
             if ($request->has('student_ids')) {
                 // Pivot data requires is_primary_contact? defaulting false for now
                 $guardian->students()->attach($request->student_ids, ['is_primary_contact' => false, 'can_pickup' => true]);

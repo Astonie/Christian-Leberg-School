@@ -53,9 +53,19 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
-    public function profile()
+    public function student()
     {
-        return $this->morphTo();
+        return $this->hasOne(Student::class);
+    }
+
+    public function teacher()
+    {
+        return $this->hasOne(Teacher::class);
+    }
+
+    public function guardian()
+    {
+        return $this->hasOne(Guardian::class);
     }
 
     public function hasRole($role)

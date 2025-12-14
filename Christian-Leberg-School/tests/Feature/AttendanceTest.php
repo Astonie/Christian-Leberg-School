@@ -50,8 +50,6 @@ class AttendanceTest extends TestCase
             'qualification' => 'B.Ed',
             'employment_type' => 'full-time'
         ]);
-        $this->teacherUser->profile()->associate($this->teacher);
-        $this->teacherUser->save();
 
         // Create Academic Structure
         $academicYear = AcademicYear::create(['name' => '2025', 'start_date' => '2025-01-01', 'end_date' => '2025-12-31', 'is_active' => true]);
@@ -67,8 +65,6 @@ class AttendanceTest extends TestCase
             'date_of_birth' => now()->subYears(10),
             'gender' => 'male'
         ]);
-        $studentUser->profile()->associate($this->student);
-        $studentUser->save();
 
         $this->student->streams()->attach($this->stream->id, [
             'academic_year_id' => $academicYear->id,

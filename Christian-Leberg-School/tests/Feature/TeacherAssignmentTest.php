@@ -39,8 +39,7 @@ class TeacherAssignmentTest extends TestCase
             'phone_number' => '123',
             'qualification' => 'B.Ed',
         ]);
-        $this->teacherUser->profile()->associate($this->teacher);
-        $this->teacherUser->save();
+        // teacher already has user_id set
         
         // Setup Academic Year
         AcademicYear::create(['name' => '2025', 'start_date' => '2025-01-01', 'end_date' => '2025-12-31', 'is_active' => true]);
