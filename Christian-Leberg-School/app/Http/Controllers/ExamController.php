@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Exam;
 use App\Models\AcademicYear;
+use App\Models\SchoolClass;
+use App\Models\Student;
 use Illuminate\Http\Request;
 
 class ExamController extends Controller
@@ -72,5 +74,46 @@ class ExamController extends Controller
         });
 
         return view('exams.report', compact('exam', 'insufficient', 'report'));
+    }
+
+    public function classReport(Exam $exam, SchoolClass $class)
+    {
+        $user = auth()->user();
+
+        // Only admin or class teacher may generate class reports
+        if (! $user->hasRole('admin')) {
+            // check if teacher is class teacher for any stream in this class for this academic year
+            $isClassTeacher = $class->streams()->where('academic_year_id', $exam->academic_year_id)->get()->contains(function ($stream) use ($user) {
+                return $stream->class_teacher?->id === $user->teacher?->id;
+            });
+
+            if (! $isClassTeacher) abort(403);
+        }
+
+        // students in this class and academic year
+        $students = Student::whereHas('streams', function ($q) use ($class, $exam) {
+            $q->where('class_id', $class->id)->where('student_stream.academic_year_id', $exam->academic_year_id)->where('student_stream.is_active', true);
+        })->with('user')->get();
+
+        return view('exams.class_report', compact('exam', 'class', 'students'));
+    }
+
+    public function classReportPdf(Exam $exam, SchoolClass $class)
+    {
+        // Render the HTML report and convert to PDF if Dompdf is available
+        $html = view('exams.class_report', ['exam' => $exam, 'class' => $class, 'students' => Student::whereHas('streams', function ($q) use ($class, $exam) {
+            $q->where('class_id', $class->id)->where('student_stream.academic_year_id', $exam->academic_year_id)->where('student_stream.is_active', true);
+        })->with('user')->get()])->render();
+
+        if (class_exists(\Dompdf\Dompdf::class)) {
+            $dompdf = new \Dompdf\Dompdf();
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'portrait');
+            $dompdf->render();
+            return response($dompdf->output(), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="class_report_'.$class->id.'_exam_'.$exam->id.'.pdf"']);
+        }
+
+        // Fallback: return HTML
+        return response($html);
     }
 }

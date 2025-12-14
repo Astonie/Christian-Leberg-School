@@ -14,6 +14,11 @@
                 <div class="mt-4">
                     <a href="{{ route('exams.results.index', $exam) }}" class="px-3 py-2 bg-green-600 text-white rounded">View Results</a>
                     <a href="{{ route('exams.results.create', $exam) }}" class="ml-2 px-3 py-2 bg-indigo-600 text-white rounded">Enter Results</a>
+                    @if(auth()->user()->hasRole('teacher'))
+                        @foreach(auth()->user()->teacher->subjects()->wherePivot('academic_year_id', $exam->academic_year_id)->get() as $subj)
+                            <a href="{{ route('exams.results.create_for_subject', [$exam, $subj]) }}" class="ml-2 px-3 py-2 bg-indigo-500 text-white rounded">Enter {{ $subj->name }} Results</a>
+                        @endforeach
+                    @endif
                 </div>
             </div>
         </div>

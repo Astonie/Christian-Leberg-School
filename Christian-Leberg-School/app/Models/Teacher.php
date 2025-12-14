@@ -27,6 +27,11 @@ class Teacher extends Model
                     ->withTimestamps();
     }
 
+    public function teachesSubjectInYear(int $subjectId, int $yearId): bool
+    {
+        return $this->subjects()->wherePivot('academic_year_id', $yearId)->where('subjects.id', $subjectId)->exists();
+    }
+
     public function streams()
     {
         return $this->belongsToMany(Stream::class, 'stream_teacher')

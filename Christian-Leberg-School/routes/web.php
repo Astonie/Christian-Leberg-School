@@ -29,6 +29,8 @@ Route::middleware(['auth'])->group(function () {
         Route::middleware('role:admin')->group(function () {
             Route::resource('exams', \App\Http\Controllers\ExamController::class);
             Route::get('exams/{exam}/report', [\App\Http\Controllers\ExamController::class, 'report'])->name('exams.report');
+            Route::get('exams/{exam}/classes/{class}/report', [\App\Http\Controllers\ExamController::class, 'classReport'])->name('exams.class.report');
+            Route::get('exams/{exam}/classes/{class}/report/pdf', [\App\Http\Controllers\ExamController::class, 'classReportPdf'])->name('exams.report.pdf');
             Route::get('exams/{exam}/results/create', [\App\Http\Controllers\ExamResultController::class, 'create'])->name('exams.results.create');
             Route::post('exams/{exam}/results', [\App\Http\Controllers\ExamResultController::class, 'store'])->name('exams.results.store');
             Route::get('exams/{exam}/results', [\App\Http\Controllers\ExamResultController::class, 'index'])->name('exams.results.index');
@@ -37,6 +39,12 @@ Route::middleware(['auth'])->group(function () {
     // Teacher Routes
     Route::middleware('role:teacher')->prefix('teacher')->name('dashboard.teacher')->group(function () {
         Route::get('/', [DashboardController::class, 'teacher']);
+    });
+
+    // Teacher: enter results for subjects they teach
+    Route::middleware('role:teacher')->group(function () {
+        Route::get('exams/{exam}/subjects/{subject}/results/create', [\App\Http\Controllers\ExamResultController::class, 'createForSubject'])->name('exams.results.create_for_subject');
+        Route::post('exams/{exam}/subjects/{subject}/results', [\App\Http\Controllers\ExamResultController::class, 'storeForSubject'])->name('exams.results.store_for_subject');
     });
 
     // Student Routes

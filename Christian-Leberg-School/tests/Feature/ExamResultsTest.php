@@ -7,6 +7,7 @@ use App\Models\Role;
 use App\Models\AcademicYear;
 use App\Models\Exam;
 use App\Models\Student;
+use App\Models\ExamResult;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -98,10 +99,11 @@ class ExamResultsTest extends TestCase
         $subj3 = \App\Models\Subject::create(['name' => 'S3', 'code' => 'S3']);
         $subj4 = \App\Models\Subject::create(['name' => 'S4', 'code' => 'S4']);
 
-        $userA = User::factory()->create(['role_id' => Role::where('slug','student')->first()->id]);
+        $studentRole = Role::where('slug','student')->first() ?? Role::create(['name'=>'Student','slug'=>'student']);
+        $userA = User::factory()->create(['role_id' => $studentRole->id]);
         $studentA = Student::create(['user_id'=>$userA->id,'admission_number'=>'A1','admission_date'=>now(),'date_of_birth'=>now()->subYears(12),'gender'=>'male']);
 
-        $userB = User::factory()->create(['role_id' => Role::where('slug','student')->first()->id]);
+        $userB = User::factory()->create(['role_id' => $studentRole->id]);
         $studentB = Student::create(['user_id'=>$userB->id,'admission_number'=>'B1','admission_date'=>now(),'date_of_birth'=>now()->subYears(12),'gender'=>'male']);
 
         $class = \App\Models\SchoolClass::create(['name'=>'Grade X','level'=>1]);
@@ -124,5 +126,36 @@ class ExamResultsTest extends TestCase
         $response->assertSee('Students with insufficient subjects');
         $response->assertSee($studentB->user->name);
         $response->assertSee($studentA->user->name);
+    }
+
+    public function test_class_report_access_and_pdf_generation()
+    {
+        Role::create(['name' => 'Admin', 'slug' => 'admin']);
+        $admin = User::factory()->create(['role_id' => Role::where('slug', 'admin')->first()->id]);
+
+        $year = AcademicYear::create(['name' => '2025', 'start_date' => '2025-01-01', 'end_date' => '2025-12-31', 'is_active' => true]);
+        $exam = Exam::create(['academic_year_id' => $year->id, 'name' => 'Class Exam', 'term' => 'Term 1', 'start_date' => '2025-06-01', 'end_date' => '2025-06-02']);
+
+        $class = \App\Models\SchoolClass::create(['name' => 'Grade For PDF', 'level' => 1]);
+        $stream = \App\Models\Stream::create(['name' => 'A', 'class_id' => $class->id, 'academic_year_id' => $year->id]);
+
+        $studentRole = Role::where('slug','student')->first() ?? Role::create(['name'=>'Student','slug'=>'student']);
+        $user = User::factory()->create(['role_id' => $studentRole->id]);
+        $student = Student::create(['user_id'=>$user->id,'admission_number'=>'PDF1','admission_date'=>now(),'date_of_birth'=>now()->subYears(12),'gender'=>'male']);
+        $student->streams()->attach($stream->id,['academic_year_id'=>$year->id,'enrollment_date'=>now(),'is_active'=>true]);
+
+        // Create subject and results for student (4 subjects to be complete)
+        for ($i=1;$i<=4;$i++) {
+            $s = \App\Models\Subject::create(['name'=>'Sub'.$i,'code'=>'S'.$i]);
+            ExamResult::create(['exam_id'=>$exam->id,'student_id'=>$student->id,'subject_id'=>$s->id,'marks'=>80]);
+        }
+
+        $response = $this->actingAs($admin)->get(route('exams.class.report', [$exam, $class]));
+        $response->assertStatus(200);
+        $response->assertSee('Class Report');
+
+        // PDF endpoint - may return HTML if Dompdf not present; at least ensure 200
+        $pdfResp = $this->actingAs($admin)->get(route('exams.report.pdf', [$exam, $class]));
+        $pdfResp->assertStatus(200);
     }
 }

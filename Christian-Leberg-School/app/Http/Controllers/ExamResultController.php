@@ -25,6 +25,67 @@ class ExamResultController extends Controller
         return view('exams.results.create', compact('exam', 'students', 'subjects'));
     }
 
+    public function createForSubject(Exam $exam, Subject $subject)
+    {
+        $user = auth()->user();
+        if (! $user->teacher) {
+            abort(403);
+        }
+
+        // ensure teacher teaches this subject in the exam's academic year
+        $teacher = $user->teacher;
+        $teaches = $teacher->subjects()->wherePivot('academic_year_id', $exam->academic_year_id)->where('subjects.id', $subject->id)->exists();
+        if (! $teaches) {
+            abort(403);
+        }
+
+        // Get streams where teacher teaches this subject in that academic year
+        $streams = $teacher->streams()->wherePivot('subject_id', $subject->id)->where('academic_year_id', $exam->academic_year_id)->get();
+
+        $streamIds = $streams->pluck('id');
+
+        // Students in those streams (and active enrollment)
+        $students = Student::with('user')->whereHas('streams', function ($q) use ($streamIds, $exam) {
+            $q->whereIn('streams.id', $streamIds)->where('student_stream.academic_year_id', $exam->academic_year_id)->where('student_stream.is_active', true);
+        })->get();
+
+        $subjects = [$subject];
+
+        return view('exams.results.create', compact('exam', 'students', 'subjects'));
+    }
+
+    public function storeForSubject(Request $request, Exam $exam, Subject $subject)
+    {
+        $user = auth()->user();
+        if (! $user->teacher) abort(403);
+
+        $teacher = $user->teacher;
+        $teaches = $teacher->subjects()->wherePivot('academic_year_id', $exam->academic_year_id)->where('subjects.id', $subject->id)->exists();
+        if (! $teaches) abort(403);
+
+        $data = $request->validate([
+            'results' => ['required', 'array'],
+            'results.*.student_id' => [
+                'required',
+                Rule::exists('student_stream', 'student_id')->where(function ($query) use ($exam, $teacher, $subject) {
+                    $query->where('academic_year_id', $exam->academic_year_id)->where('is_active', true);
+                }),
+            ],
+            'results.*.marks' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        DB::transaction(function () use ($exam, $data, $subject) {
+            foreach ($data['results'] as $item) {
+                ExamResult::updateOrCreate(
+                    ['exam_id' => $exam->id, 'student_id' => $item['student_id'], 'subject_id' => $subject->id],
+                    ['marks' => (int) ($item['marks'] ?? 0), 'subject_id' => $subject->id]
+                );
+            }
+        });
+
+        return redirect()->route('exams.show', $exam)->with('success', 'Results saved.');
+    }
+
     public function store(Request $request, Exam $exam)
     {
         $data = $request->validate([
