@@ -19,12 +19,12 @@
                                 <h3 class="text-lg font-medium text-gray-900">Account Details</h3>
                                 <div>
                                     <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
-                                    <input type="text" name="name" id="name" value="{{ old('name', $guardian->user->name) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                                    <input type="text" name="name" id="name" value="{{ old('name', $guardian->user->name) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
                                     @error('name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                                 </div>
                                 <div>
                                     <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
-                                    <input type="email" name="email" id="email" value="{{ old('email', $guardian->user->email) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                                    <input type="email" name="email" id="email" value="{{ old('email', $guardian->user->email) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
                                     @error('email') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                                 </div>
                             </div>
@@ -34,7 +34,7 @@
                                 <h3 class="text-lg font-medium text-gray-900">Profile Details</h3>
                                 <div>
                                     <label for="relationship" class="block text-sm font-medium text-gray-700">Relationship to Student</label>
-                                    <select name="relationship" id="relationship" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                                    <select name="relationship" id="relationship" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
                                         <option value="">Select Relationship</option>
                                         @foreach(['Father', 'Mother', 'Grandparent', 'Uncle', 'Aunt', 'Sibling', 'Other'] as $rel)
                                             <option value="{{ $rel }}" {{ old('relationship', $guardian->relationship) == $rel ? 'selected' : '' }}>{{ $rel }}</option>
@@ -44,16 +44,16 @@
                                 </div>
                                 <div>
                                     <label for="phone_number" class="block text-sm font-medium text-gray-700">Phone Number</label>
-                                    <input type="text" name="phone_number" id="phone_number" value="{{ old('phone_number', $guardian->phone_number) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                                    <input type="text" name="phone_number" id="phone_number" value="{{ old('phone_number', $guardian->phone_number) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
                                     @error('phone_number') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                                 </div>
                                 <div>
                                     <label for="occupation" class="block text-sm font-medium text-gray-700">Occupation</label>
-                                    <input type="text" name="occupation" id="occupation" value="{{ old('occupation', $guardian->occupation) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <input type="text" name="occupation" id="occupation" value="{{ old('occupation', $guardian->occupation) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 </div>
                                 <div>
                                     <label for="address" class="block text-sm font-medium text-gray-700">Address</label>
-                                    <textarea name="address" id="address" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('address', $guardian->address) }}</textarea>
+                                    <textarea name="address" id="address" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ old('address', $guardian->address) }}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -64,7 +64,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-h-60 overflow-y-auto p-4 border rounded-md">
                                 @foreach($students as $student)
                                     <label class="flex items-center space-x-3">
-                                        <input type="checkbox" name="student_ids[]" value="{{ $student->id }}" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                        <input type="checkbox" name="student_ids[]" value="{{ $student->id }}" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                             {{ $guardian->students->contains($student->id) ? 'checked' : '' }}>
                                         <span class="text-sm text-gray-700">{{ $student->user->name }} ({{ $student->admission_number }})</span>
                                     </label>
@@ -74,7 +74,7 @@
 
                         <div class="flex justify-end pt-6">
                             <a href="{{ route('guardians.index') }}" class="text-gray-600 hover:text-gray-900 mr-4 self-center">Cancel</a>
-                            <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700">Update Guardian</button>
+                            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">Update Guardian</button>
                         </div>
                     </form>
                 </div>

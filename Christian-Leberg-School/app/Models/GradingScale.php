@@ -9,8 +9,18 @@ class GradingScale extends Model
     protected $guarded = [];
 
     protected $casts = [
-        'min_percentage' => 'decimal:2',
-        'max_percentage' => 'decimal:2',
-        'grade_point' => 'decimal:2',
+        // old schema compatibility
+        'min_percentage' => 'float',
+        'max_percentage' => 'float',
+        'grade_point' => 'float',
+        // new schema fields
+        'min_score' => 'float',
+        'max_score' => 'float',
+        'points' => 'float',
     ];
+
+    public function gradingSystem()
+    {
+        return $this->belongsTo(GradingSystem::class);
+    }
 }

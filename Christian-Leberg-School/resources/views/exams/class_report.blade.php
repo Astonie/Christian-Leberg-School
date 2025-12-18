@@ -8,7 +8,7 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-semibold">Students Report</h3>
-                    <a href="{{ route('exams.report.pdf', [$exam, $class]) }}" class="px-3 py-2 bg-indigo-600 text-white rounded">Download PDF</a>
+                    <a href="{{ route('exams.report.pdf', [$exam, $class]) }}" class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Download PDF</a>
                 </div>
 
                 @if($students->count())
@@ -33,7 +33,7 @@
                                     <td class="px-6 py-4">{{ number_format($stu->examResults()->where('exam_id', $exam->id)->avg('marks') ?? 0, 2) }}</td>
                                     <td class="px-6 py-4">{{ optional($stu->examResults()->where('exam_id', $exam->id)->first())->grade ?? '-' }}</td>
                                     <td class="px-6 py-4">
-                                        <a href="{{ route('exams.student.report.pdf', [$exam, $stu]) }}" class="px-2 py-1 bg-indigo-600 text-white rounded">Download</a>
+                                        <a href="{{ route('exams.student.report.pdf', [$exam, $stu]) }}" class="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">Download</a>
                                     </td>
                                 </tr>
                             @endforeach

@@ -21,6 +21,7 @@ class StoreAcademicYearRequest extends FormRequest
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after:start_date'],
             'is_active' => ['boolean'],
+            'inherit_previous' => ['nullable', 'boolean'],
         ];
     }
 }

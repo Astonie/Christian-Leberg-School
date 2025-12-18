@@ -9,7 +9,7 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <!-- Actions -->
             <div class="mb-4">
-                <a href="{{ route('subjects.create') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
+                <a href="{{ route('subjects.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                     Add New Subject
                 </a>
             </div>
@@ -33,7 +33,7 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $subject->name }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ Str::limit($subject->description, 50) }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <a href="{{ route('subjects.edit', $subject) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
+                                        <a href="{{ route('subjects.edit', $subject) }}" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
                                         <form action="{{ route('subjects.destroy', $subject) }}" method="POST" class="inline">
                                             @csrf
                                             @method('DELETE')

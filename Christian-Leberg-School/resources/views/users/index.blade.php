@@ -13,10 +13,10 @@
                     <!-- Search and Filter -->
                     <form method="GET" action="{{ route('users.index') }}" class="mb-6 flex gap-4">
                         <div class="flex-1">
-                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by name or email..." class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by name or email..." class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         </div>
                         <div class="w-48">
-                            <select name="role" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <select name="role" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 <option value="">All Roles</option>
                                 @foreach($roles as $role)
                                     <option value="{{ $role->slug }}" {{ request('role') == $role->slug ? 'selected' : '' }}>
@@ -50,7 +50,7 @@
                                             <div class="text-sm text-gray-500">{{ $user->email }}</div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
                                                 {{ $user->role->name }}
                                             </span>
                                         </td>
@@ -58,7 +58,7 @@
                                             {{ $user->created_at->format('M d, Y') }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <a href="{{ route('users.edit', $user) }}" class="text-indigo-600 hover:text-indigo-900 mr-4">Edit</a>
+                                            <a href="{{ route('users.edit', $user) }}" class="text-blue-600 hover:text-blue-900 mr-4">Edit</a>
                                             
                                             @if(auth()->id() !== $user->id)
                                                 <form action="{{ route('users.destroy', $user) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure? This action cannot be undone.');">

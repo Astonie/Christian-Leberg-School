@@ -15,6 +15,7 @@ class StoreAttendanceRequest extends FormRequest
     {
         return [
             'stream_id' => 'required|exists:streams,id',
+            'subject_id' => 'required|exists:subjects,id',
             'date' => 'required|date',
             'attendance' => 'required|array',
             'attendance.*.student_id' => 'required|exists:students,id',

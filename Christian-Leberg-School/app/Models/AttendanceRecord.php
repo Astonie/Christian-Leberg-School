@@ -22,6 +22,11 @@ class AttendanceRecord extends Model
         return $this->belongsTo(Stream::class);
     }
 
+    public function subject()
+    {
+        return $this->belongsTo(Subject::class);
+    }
+
     public function teacher()
     {
         return $this->belongsTo(Teacher::class);

@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Student extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $guarded = [];
 
@@ -31,7 +32,7 @@ class Student extends Model
     public function streams()
     {
         return $this->belongsToMany(Stream::class, 'student_stream')
-                    ->withPivot('academic_year_id', 'enrollment_date', 'is_active')
+                    ->withPivot('academic_year_id', 'term_id', 'enrollment_date', 'is_active')
                     ->withTimestamps();
     }
 
@@ -42,21 +43,24 @@ class Student extends Model
 
     public function activeStreams()
     {
-        return $this->streams()->wherePivot('is_active', true)->latest('pivot_enrollment_date');
+        // Order by the pivot enrollment_date descending so the most recent active stream is first
+        return $this->streams()->wherePivot('is_active', true)->orderBy('student_stream.enrollment_date', 'desc');
     }
 
     public function getCurrentStreamAttribute()
     {
-        return $this->activeStreams->first();
+        // When accessed as property, activeStreams returns a Collection; ensure we get the first model
+        $streams = $this->activeStreams()->get();
+        return $streams->first();
+    }
+
+    public function getCurrentClassAttribute()
+    {
+        return $this->currentStream?->schoolClass;
     }
 
     public function attendanceRecords()
     {
         return $this->hasMany(AttendanceRecord::class);
-    }
-
-    public function examResults()
-    {
-        return $this->hasMany(ExamResult::class);
     }
 }

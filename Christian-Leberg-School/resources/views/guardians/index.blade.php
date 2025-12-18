@@ -4,7 +4,7 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Guardians') }}
             </h2>
-            <a href="{{ route('guardians.create') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">Add New Guardian</a>
+            <a href="{{ route('guardians.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Add New Guardian</a>
         </div>
     </x-slot>
 
@@ -15,7 +15,7 @@
                     
                     <form method="GET" action="{{ route('guardians.index') }}" class="mb-6">
                         <div class="flex gap-4">
-                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by name or email..." class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search by name or email..." class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-700">Search</button>
                         </div>
                     </form>
@@ -52,7 +52,7 @@
                                             @endforeach
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <a href="{{ route('guardians.edit', $guardian) }}" class="text-indigo-600 hover:text-indigo-900 mr-4">Edit</a>
+                                            <a href="{{ route('guardians.edit', $guardian) }}" class="text-blue-600 hover:text-blue-900 mr-4">Edit</a>
                                             <form action="{{ route('guardians.destroy', $guardian) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure?');">
                                                 @csrf
                                                 @method('DELETE')

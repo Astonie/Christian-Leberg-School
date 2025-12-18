@@ -1,3 +1,107 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Mobile-First Responsive Utilities */
+@layer components {
+    /* Responsive Table Wrapper */
+    .table-responsive {
+        @apply w-full overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0;
+    }
+    
+    .table-responsive table {
+        @apply min-w-full;
+    }
+    
+    /* Mobile Card Layout for Tables */
+    @media (max-width: 640px) {
+        .mobile-card-table thead {
+            @apply hidden;
+        }
+        
+        .mobile-card-table tbody tr {
+            @apply block mb-4 bg-white rounded-lg shadow p-4 border border-gray-200;
+        }
+        
+        .mobile-card-table tbody td {
+            @apply block text-right py-2 px-0 border-b border-gray-100 last:border-b-0;
+        }
+        
+        .mobile-card-table tbody td:before {
+            content: attr(data-label);
+            @apply float-left font-semibold text-gray-700;
+        }
+    }
+    
+    /* Touch-Friendly Buttons */
+    .btn-mobile {
+        @apply min-h-[44px] px-4 py-2.5 text-sm sm:text-base;
+    }
+    
+    /* Responsive Form Inputs */
+    .input-mobile {
+        @apply min-h-[44px] px-4 py-2.5 text-base;
+    }
+    
+    /* Responsive Grid */
+    .grid-responsive {
+        @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6;
+    }
+    
+    .grid-responsive-2 {
+        @apply grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 lg:gap-6;
+    }
+    
+    /* Responsive Cards */
+    .card-mobile {
+        @apply bg-white rounded-lg shadow-sm p-4 sm:p-6;
+    }
+    
+    /* Responsive Spacing */
+    .section-spacing {
+        @apply py-4 sm:py-6 lg:py-8;
+    }
+    
+    .container-mobile {
+        @apply px-3 sm:px-4 lg:px-6 max-w-7xl mx-auto;
+    }
+}
+
+/* Scrollbar Styling */
+@layer utilities {
+    .scrollbar-thin::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    
+    .scrollbar-thin::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+        @apply bg-gray-300 rounded-full;
+    }
+    
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+        @apply bg-gray-400;
+    }
+}
+
+/* Mobile Navigation Animations */
+@keyframes slideIn {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-100%);
+    }
+}

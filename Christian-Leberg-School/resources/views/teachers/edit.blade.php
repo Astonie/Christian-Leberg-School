@@ -61,7 +61,7 @@
                             </div>
                             <div>
                                 <x-input-label for="employment_type" :value="__('Employment Type')" />
-                                <select id="employment_type" name="employment_type" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                <select id="employment_type" name="employment_type" class="block mt-1 w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm">
                                     <option value="full_time" {{ old('employment_type', $teacher->employment_type) == 'full_time' ? 'selected' : '' }}>Full Time</option>
                                     <option value="part_time" {{ old('employment_type', $teacher->employment_type) == 'part_time' ? 'selected' : '' }}>Part Time</option>
                                     <option value="contract" {{ old('employment_type', $teacher->employment_type) == 'contract' ? 'selected' : '' }}>Contract</option>
@@ -90,7 +90,7 @@
                         
                         <div class="mb-6">
                             <x-input-label for="address" :value="__('Address')" />
-                            <textarea id="address" name="address" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" rows="3">{{ old('address', $teacher->address) }}</textarea>
+                            <textarea id="address" name="address" class="block mt-1 w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm" rows="3">{{ old('address', $teacher->address) }}</textarea>
                             <x-input-error :messages="$errors->get('address')" class="mt-2" />
                         </div>
 

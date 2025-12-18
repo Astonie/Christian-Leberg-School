@@ -9,7 +9,7 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
-                    <form method="POST" action="{{ route('classes.update', $schoolClass) }}">
+                    <form method="POST" action="{{ route('classes.update', ['class' => request()->route('class') ?? ($schoolClass->id ?? $schoolClass)]) }}">
                         @csrf
                         @method('PUT')
 
@@ -27,7 +27,7 @@
 
                         <div class="mb-4">
                             <x-input-label for="description" :value="__('Description')" />
-                            <textarea id="description" name="description" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" rows="3">{{ old('description', $schoolClass->description) }}</textarea>
+                            <textarea id="description" name="description" class="block mt-1 w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm" rows="3">{{ old('description', $schoolClass->description) }}</textarea>
                             <x-input-error :messages="$errors->get('description')" class="mt-2" />
                         </div>
 

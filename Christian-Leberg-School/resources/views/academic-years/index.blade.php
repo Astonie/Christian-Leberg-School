@@ -9,7 +9,7 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <!-- Actions -->
             <div class="mb-4">
-                <a href="{{ route('academic-years.create') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
+                <a href="{{ route('academic-years.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                     Add New Academic Year
                 </a>
             </div>
@@ -39,7 +39,7 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <a href="{{ route('academic-years.edit', $year) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
+                                        <a href="{{ route('academic-years.edit', $year) }}" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
                                         <form action="{{ route('academic-years.destroy', $year) }}" method="POST" class="inline">
                                             @csrf
                                             @method('DELETE')

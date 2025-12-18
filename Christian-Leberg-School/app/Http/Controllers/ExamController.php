@@ -6,6 +6,7 @@ use App\Models\Exam;
 use App\Models\AcademicYear;
 use App\Models\SchoolClass;
 use App\Models\Student;
+use App\Models\ExamResult;
 use Illuminate\Http\Request;
 
 class ExamController extends Controller
@@ -18,8 +19,14 @@ class ExamController extends Controller
 
     public function create()
     {
-        $years = AcademicYear::all();
-        return view('exams.create', compact('years'));
+        $years = AcademicYear::with('terms')->get();
+        $activeYear = AcademicYear::active()->first();
+        $examTypes = \App\Models\ExamType::all();
+        $gradingScales = \App\Models\GradingScale::all();
+        $subjects = \App\Models\Subject::orderBy('name')->get();
+        $classes = SchoolClass::orderBy('name')->get();
+        
+        return view('exams.create', compact('years', 'activeYear', 'examTypes', 'gradingScales', 'subjects', 'classes'));
     }
 
     public function store(Request $request)
@@ -27,14 +34,43 @@ class ExamController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'academic_year_id' => ['required', 'exists:academic_years,id'],
+            'term_id' => ['nullable', 'exists:terms,id'],
+            'exam_type_id' => ['nullable', 'exists:exam_types,id'],
+            'grading_scale_id' => ['nullable', 'exists:grading_scales,id'],
             'term' => ['required', 'string'],
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+            'description' => ['nullable', 'string'],
+            'subjects' => ['nullable', 'array'],
+            'subjects.*' => ['exists:subjects,id'],
+            'classes' => ['nullable', 'array'],
+            'classes.*' => ['exists:school_classes,id'],
         ]);
 
-        Exam::create($data);
+        // Create the exam
+        $exam = Exam::create([
+            'name' => $data['name'],
+            'academic_year_id' => $data['academic_year_id'],
+            'term_id' => $data['term_id'] ?? null,
+            'exam_type_id' => $data['exam_type_id'] ?? null,
+            'grading_scale_id' => $data['grading_scale_id'] ?? null,
+            'term' => $data['term'],
+            'start_date' => $data['start_date'],
+            'end_date' => $data['end_date'],
+            'description' => $data['description'] ?? null,
+        ]);
 
-        return redirect()->route('exams.index')->with('success', 'Exam created successfully.');
+        // Attach subjects if selected
+        if (!empty($data['subjects'])) {
+            $exam->subjects()->attach($data['subjects']);
+        }
+
+        // Attach classes if selected
+        if (!empty($data['classes'])) {
+            $exam->classes()->attach($data['classes']);
+        }
+
+        return redirect()->route('exams.index')->with('success', 'Exam created successfully with ' . count($data['subjects'] ?? []) . ' subjects and ' . count($data['classes'] ?? []) . ' classes.');
     }
 
     public function show(Exam $exam)
@@ -119,30 +155,185 @@ class ExamController extends Controller
 
     public function studentReportPdf(Exam $exam, Student $student)
     {
-        // Authorization: admin or the student themselves or class teacher
+        try {
+            $user = auth()->user();
+            if (! $user->hasRole('admin') && $user->id !== $student->user_id) {
+                $teacherOk = $user->teacher && $student->examResults()->where('exam_id', $exam->id)->whereIn('subject_id', $user->teacher->subjects()->pluck('subjects.id'))->exists();
+                if (! $teacherOk) abort(403);
+            }
+
+            $data = $this->buildStudentReportData($exam, $student);
+
+            $html = view('exams.pdf.student_report', $data)->render();
+
+            if (class_exists(\Dompdf\Dompdf::class)) {
+                $dompdf = new \Dompdf\Dompdf();
+                
+                // Configure DOMPDF for better output
+                $options = new \Dompdf\Options();
+                $options->set('isHtml5ParserEnabled', true);
+                $options->set('isRemoteEnabled', true);
+                $options->set('defaultFont', 'Arial');
+                $options->set('isFontSubsettingEnabled', true);
+                $options->set('dpi', 120);
+                $dompdf->setOptions($options);
+                
+                $dompdf->loadHtml($html);
+                $dompdf->setPaper('A4', 'portrait');
+                $dompdf->render();
+                
+                // Generate descriptive filename
+                $filename = sprintf(
+                    'report_card_%s_%s_%s.pdf',
+                    str_replace(' ', '_', $student->admission_number),
+                    str_replace(' ', '_', $exam->name),
+                    now()->format('Y-m-d')
+                );
+                
+                return response($dompdf->output(), 200, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                    'Cache-Control' => 'no-cache, no-store, must-revalidate',
+                    'Pragma' => 'no-cache',
+                    'Expires' => '0'
+                ]);
+            }
+
+            return response($html)->with('error', 'PDF library not available. Displaying HTML version.');
+
+        } catch (\Exception $e) {
+            \Log::error('PDF Generation Error: ' . $e->getMessage(), [
+                'exam_id' => $exam->id,
+                'student_id' => $student->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return back()->with('error', 'Failed to generate PDF report. Please try again or contact support if the problem persists.');
+        }
+    }
+
+    public function studentReport(Exam $exam, Student $student)
+    {
         $user = auth()->user();
         if (! $user->hasRole('admin') && $user->id !== $student->user_id) {
-            // allow teacher if they teach any subject the student has for this exam
             $teacherOk = $user->teacher && $student->examResults()->where('exam_id', $exam->id)->whereIn('subject_id', $user->teacher->subjects()->pluck('subjects.id'))->exists();
             if (! $teacherOk) abort(403);
         }
 
-        $results = $student->examResults()->where('exam_id', $exam->id)->with('subject')->get();
-        $total = $results->sum('marks');
-        $average = $results->avg('marks');
+        $data = $this->buildStudentReportData($exam, $student);
+        return view('exams.student_report', $data);
+    }
 
-        $data = compact('exam', 'student', 'results', 'total', 'average');
-
-        $html = view('exams.student_report', $data)->render();
-
-        if (class_exists(\Dompdf\Dompdf::class)) {
-            $dompdf = new \Dompdf\Dompdf();
-            $dompdf->loadHtml($html);
-            $dompdf->setPaper('A4', 'portrait');
-            $dompdf->render();
-            return response($dompdf->output(), 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'attachment; filename="report_'.$student->id.'_exam_'.$exam->id.'.pdf"']);
+    /**
+     * Display the professional report card view
+     */
+    public function reportCard(Exam $exam, Student $student)
+    {
+        $user = auth()->user();
+        if (! $user->hasRole('admin') && $user->id !== $student->user_id) {
+            $teacherOk = $user->teacher && $student->examResults()->where('exam_id', $exam->id)->whereIn('subject_id', $user->teacher->subjects()->pluck('subjects.id'))->exists();
+            if (! $teacherOk) abort(403);
         }
 
-        return response($html);
+        $data = $this->buildStudentReportData($exam, $student);
+        return view('exams.report_card', $data);
+    }
+
+    public function buildStudentReportData(Exam $exam, Student $student): array
+    {
+        $results = $student->examResults()
+            ->where('exam_id', $exam->id)
+            ->with('subject')
+            ->get()
+            ->sortBy(fn ($r) => $r->subject?->name);
+
+        $gradeScale = function (int $marks) use ($exam): array {
+            // Prefer database-backed grading scales if available
+            $scale = \App\Models\GradingScale::where('min_percentage', '<=', $marks)->where('max_percentage', '>=', $marks)->first();
+            if ($scale) {
+                return ['grade' => $scale->label, 'remark' => $scale->remark, 'passed' => (int)$scale->grade_point <= 7];
+            }
+
+            // Fallback
+            if ($marks >= 85) return ['grade' => 1, 'remark' => 'Strong Distinction', 'passed' => true];
+            if ($marks >= 75) return ['grade' => 2, 'remark' => 'Distinction', 'passed' => true];
+            if ($marks >= 70) return ['grade' => 3, 'remark' => 'Strong Credit', 'passed' => true];
+            if ($marks >= 65) return ['grade' => 4, 'remark' => 'Strong Credit', 'passed' => true];
+            if ($marks >= 60) return ['grade' => 5, 'remark' => 'Credit', 'passed' => true];
+            if ($marks >= 55) return ['grade' => 6, 'remark' => 'Weak Credit', 'passed' => true];
+            if ($marks >= 50) return ['grade' => 7, 'remark' => 'Pass', 'passed' => true];
+            if ($marks >= 40) return ['grade' => 8, 'remark' => 'Weak Pass', 'passed' => false];
+            return ['grade' => 9, 'remark' => 'Fail', 'passed' => false];
+        };
+
+        $stream = $student->currentStream;
+        $class = $student->currentClass;
+
+        $classStudentIds = $class
+            ? Student::whereHas('streams', function ($q) use ($class, $exam) {
+                $q->where('class_id', $class->id)->where('student_stream.academic_year_id', $exam->academic_year_id)->where('student_stream.is_active', true);
+            })->pluck('students.id')->all()
+            : [];
+
+        $streamStudentIds = $stream
+            ? Student::whereHas('streams', function ($q) use ($stream, $exam) {
+                $q->where('streams.id', $stream->id)->where('student_stream.academic_year_id', $exam->academic_year_id)->where('student_stream.is_active', true);
+            })->pluck('students.id')->all()
+            : [];
+
+        $rankPosition = function (array $scoresByStudentId, int $studentId): ?int {
+            if (! array_key_exists($studentId, $scoresByStudentId)) return null;
+            $studentScore = $scoresByStudentId[$studentId];
+            $higher = 0;
+            foreach ($scoresByStudentId as $sid => $score) {
+                if ($sid === $studentId) continue;
+                if ($score > $studentScore) $higher++;
+            }
+            return $higher + 1;
+        };
+
+        $total = $results->sum('marks');
+        $subjectCount = $results->count();
+        $totalPossible = $subjectCount * 100;
+        $average = $subjectCount > 0 ? ($total / $subjectCount) : null;
+
+        $subjectsPassed = $results->filter(fn ($r) => ($gradeScale((int) $r->marks)['passed']))->count();
+        $points = $results->sum(fn ($r) => $gradeScale((int) $r->marks)['grade']);
+        $examStatus = $subjectsPassed >= 4 ? 'PASS' : 'FAIL';
+
+        $classTotals = empty($classStudentIds)
+            ? []
+            : ExamResult::where('exam_id', $exam->id)->whereIn('student_id', $classStudentIds)->selectRaw('student_id, SUM(marks) as total')->groupBy('student_id')->pluck('total', 'student_id')->map(fn ($v) => (int) $v)->all();
+
+        $streamTotals = empty($streamStudentIds)
+            ? []
+            : ExamResult::where('exam_id', $exam->id)->whereIn('student_id', $streamStudentIds)->selectRaw('student_id, SUM(marks) as total')->groupBy('student_id')->pluck('total', 'student_id')->map(fn ($v) => (int) $v)->all();
+
+        $positionInClass = empty($classTotals) ? null : $rankPosition($classTotals, $student->id);
+        $positionInStream = empty($streamTotals) ? null : $rankPosition($streamTotals, $student->id);
+
+        $rows = $results->values()->map(function ($r, int $idx) use ($exam, $student, $classStudentIds, $gradeScale, $rankPosition) {
+            $marks = (int) $r->marks;
+            $scale = $gradeScale($marks);
+
+            $subjectScores = empty($classStudentIds)
+                ? []
+                : ExamResult::where('exam_id', $exam->id)->where('subject_id', $r->subject_id)->whereIn('student_id', $classStudentIds)->pluck('marks', 'student_id')->map(fn ($v) => (int) $v)->all();
+
+            $subjectPosition = empty($subjectScores) ? null : $rankPosition($subjectScores, $student->id);
+
+            return [
+                'no' => $idx + 1,
+                'subject' => $r->subject,
+                'marks' => $marks,
+                'percent' => $marks,
+                'grade' => $scale['grade'],
+                'remark' => $scale['remark'],
+                'position' => $subjectPosition,
+                'position_total' => count($subjectScores),
+            ];
+        });
+
+        return compact('exam', 'student', 'class', 'stream', 'results', 'rows', 'total', 'totalPossible', 'average', 'subjectsPassed', 'points', 'examStatus', 'positionInStream', 'positionInClass', 'streamTotals', 'classTotals');
     }
 }

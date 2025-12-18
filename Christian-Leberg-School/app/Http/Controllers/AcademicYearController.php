@@ -36,7 +36,16 @@ class AcademicYearController extends Controller
             AcademicYear::where('is_active', true)->update(['is_active' => false]);
         }
 
-        AcademicYear::create($request->validated());
+        $data = $request->validated();
+        $inherit = isset($data['inherit_previous']) ? (bool) $data['inherit_previous'] : false;
+        unset($data['inherit_previous']);
+
+        $year = AcademicYear::create($data);
+
+        // Optionally inherit streams and teacher assignments from previous year
+        if ($inherit) {
+            $year->inheritFromPrevious();
+        }
 
         return redirect()->route('academic-years.index')->with('success', 'Academic Year created successfully.');
     }

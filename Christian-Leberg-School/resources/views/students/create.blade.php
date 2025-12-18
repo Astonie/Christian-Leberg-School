@@ -52,7 +52,7 @@
                             </div>
                             <div>
                                 <x-input-label for="gender" :value="__('Gender')" />
-                                <select id="gender" name="gender" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                <select id="gender" name="gender" class="block mt-1 w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm">
                                     <option value="">Select Gender</option>
                                     <option value="male" {{ old('gender') == 'male' ? 'selected' : '' }}>Male</option>
                                     <option value="female" {{ old('gender') == 'female' ? 'selected' : '' }}>Female</option>
@@ -67,12 +67,12 @@
                             </div>
                             <div>
                                 <x-input-label for="stream_id" :value="__('Assign to Class Stream')" />
-                                <select id="stream_id" name="stream_id" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                <select id="stream_id" name="stream_id" class="block mt-1 w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm">
                                     <option value="">No Assignment</option>
                                     @foreach ($classes as $class)
                                         <optgroup label="{{ $class->name }}">
                                             @foreach ($class->streams as $stream)
-                                                <option value="{{ $stream->id }}" {{ old('stream_id') == $stream->id ? 'selected' : '' }}>{{ $stream->name }}</option>
+                                                <option value="{{ $stream->id }}" {{ old('stream_id') == $stream->id ? 'selected' : '' }}>{{ $stream->full_name }}</option>
                                             @endforeach
                                         </optgroup>
                                     @endforeach
@@ -81,12 +81,12 @@
                             </div>
                             <div class="col-span-2">
                                 <x-input-label for="address" :value="__('Address')" />
-                                <textarea id="address" name="address" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" rows="3">{{ old('address') }}</textarea>
+                                <textarea id="address" name="address" class="block mt-1 w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm" rows="3">{{ old('address') }}</textarea>
                                 <x-input-error :messages="$errors->get('address')" class="mt-2" />
                             </div>
                              <div class="col-span-2">
                                 <x-input-label for="medical_conditions" :value="__('Medical Conditions (Optional)')" />
-                                <textarea id="medical_conditions" name="medical_conditions" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" rows="2">{{ old('medical_conditions') }}</textarea>
+                                <textarea id="medical_conditions" name="medical_conditions" class="block mt-1 w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm" rows="2">{{ old('medical_conditions') }}</textarea>
                                 <x-input-error :messages="$errors->get('medical_conditions')" class="mt-2" />
                             </div>
                         </div>

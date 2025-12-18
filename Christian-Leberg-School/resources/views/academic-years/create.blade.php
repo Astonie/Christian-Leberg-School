@@ -35,8 +35,15 @@
 
                             <div class="col-span-2">
                                 <label for="is_active" class="inline-flex items-center">
-                                    <input id="is_active" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="is_active" value="1" {{ old('is_active') ? 'checked' : '' }}>
+                                    <input id="is_active" type="checkbox" class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500" name="is_active" value="1" {{ old('is_active') ? 'checked' : '' }}>
                                     <span class="ms-2 text-sm text-gray-600">{{ __('Set as Current Academic Year') }}</span>
+                                </label>
+                            </div>
+
+                            <div class="col-span-2">
+                                <label for="inherit_previous" class="inline-flex items-center">
+                                    <input id="inherit_previous" type="checkbox" class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500" name="inherit_previous" value="1" {{ old('inherit_previous') ? 'checked' : '' }}>
+                                    <span class="ms-2 text-sm text-gray-600">{{ __('Inherit streams & assignments from previous academic year') }}</span>
                                 </label>
                             </div>
                         </div>

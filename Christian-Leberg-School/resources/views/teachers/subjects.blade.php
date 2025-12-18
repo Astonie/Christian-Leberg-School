@@ -63,7 +63,7 @@
                             
                             <div class="mb-4">
                                 <x-input-label for="subject_id" :value="__('Select Subject')" />
-                                <select id="subject_id" name="subject_id" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
+                                <select id="subject_id" name="subject_id" class="block mt-1 w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm" required>
                                     <option value="">-- Select Subject --</option>
                                     @foreach($subjects as $subject)
                                         <option value="{{ $subject->id }}">{{ $subject->code }} - {{ $subject->name }}</option>
@@ -74,7 +74,7 @@
 
                             <div class="mb-4">
                                 <label for="is_primary" class="inline-flex items-center">
-                                    <input id="is_primary" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="is_primary" value="1">
+                                    <input id="is_primary" type="checkbox" class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500" name="is_primary" value="1">
                                     <span class="ml-2 text-sm text-gray-600">{{ __('Is Primary Subject?') }}</span>
                                 </label>
                             </div>
@@ -91,7 +91,7 @@
             </div>
             
             <div class="mt-6">
-                <a href="{{ route('teachers.show', $teacher) }}" class="text-indigo-600 hover:text-indigo-900 font-medium">&larr; Back to Teacher Profile</a>
+                <a href="{{ route('teachers.show', $teacher) }}" class="text-blue-600 hover:text-blue-900 font-medium">&larr; Back to Teacher Profile</a>
             </div>
         </div>
     </div>

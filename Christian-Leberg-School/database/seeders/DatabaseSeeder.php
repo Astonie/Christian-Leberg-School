@@ -19,6 +19,8 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             AcademicSeeder::class,
             UserSeeder::class,
+            ExamResultsSeeder::class,
+            GradingScaleSeeder::class,
         ]);
     }
 }

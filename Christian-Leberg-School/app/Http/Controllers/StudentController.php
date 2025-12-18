@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Student;
+use App\Models\Exam;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\SchoolClass;
@@ -20,10 +21,102 @@ class StudentController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $students = Student::with(['user', 'activeStreams.class'])->latest()->paginate(10);
-        return view('students.index', compact('students'));
+        $user = $request->user();
+        $query = Student::with(['user', 'activeStreams.schoolClass']);
+
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('admission_number', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Class filter
+        if ($request->filled('class')) {
+            $query->whereHas('activeStreams.schoolClass', function($q) use ($request) {
+                $q->where('classes.id', $request->class);
+            });
+        }
+
+        // Status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Gender filter
+        if ($request->filled('gender')) {
+            $query->where('gender', $request->gender);
+        }
+
+        // If a teacher is viewing, limit to students in the teacher's assigned streams for the active academic year
+        if ($user->hasRole('teacher')) {
+            $teacher = $user->teacher;
+            $year = AcademicYear::active()->first();
+            if ($teacher && $year) {
+                // stream_teacher pivot doesn't have academic_year_id, filter by streams table
+                $streamIds = $teacher->streams()->where('academic_year_id', $year->id)->pluck('streams.id')->all();
+                $query->whereHas('streams', function ($q) use ($streamIds, $year) {
+                    $q->whereIn('streams.id', $streamIds)->where('student_stream.academic_year_id', $year->id)->where('student_stream.is_active', true);
+                });
+            } else {
+                // No active year or no assignment -> return empty
+                $query->whereRaw('1 = 0');
+            }
+        }
+
+        // Export functionality
+        if ($request->filled('export')) {
+            return $this->export($request, $query);
+        }
+
+        $students = $query->latest()->paginate(15);
+        $exams = Exam::latest()->get();
+        $selectedExam = $request->query('exam') ? Exam::find($request->query('exam')) : Exam::latest()->first();
+        return view('students.index', compact('students', 'exams', 'selectedExam'));
+    }
+
+    /**
+     * Export students data
+     */
+    private function export(Request $request, $query)
+    {
+        $students = $query->get();
+        $filename = 'students_' . now()->format('Y-m-d_His') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $callback = function() use ($students) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Admission No', 'Name', 'Email', 'Gender', 'Class', 'Stream', 'Status', 'Admission Date', 'Date of Birth']);
+
+            foreach ($students as $student) {
+                fputcsv($file, [
+                    $student->admission_number,
+                    $student->user->name,
+                    $student->user->email,
+                    $student->gender,
+                    $student->current_stream ? $student->current_stream->schoolClass->name : 'N/A',
+                    $student->current_stream ? $student->current_stream->name : 'N/A',
+                    $student->status,
+                    $student->admission_date->format('Y-m-d'),
+                    $student->date_of_birth ? $student->date_of_birth->format('Y-m-d') : '',
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     /**
@@ -82,10 +175,24 @@ class StudentController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Student $student)
+    public function show(Request $request, Student $student)
     {
-        $student->load(['user', 'guardians.user', 'streams.class', 'attendanceRecords', 'examMarks.exam']);
-        return view('students.show', compact('student'));
+        $user = $request->user();
+
+        // If teacher, ensure the student is in one of their assigned streams for the active academic year
+        if ($user->hasRole('teacher')) {
+            $teacher = $user->teacher;
+            $year = AcademicYear::active()->first();
+            $inStream = $student->streams()->wherePivot('academic_year_id', $year?->id)->where('student_stream.is_active', true)->whereIn('streams.id', $teacher->streams()->where('academic_year_id', $year?->id)->pluck('streams.id')->all())->exists();
+            if (! $inStream) {
+                abort(403);
+            }
+        }
+
+        $student->load(['user', 'guardians.user', 'streams.schoolClass', 'attendanceRecords', 'examResults.exam', 'examResults.subject']);
+        $exams = Exam::latest()->get();
+        $selectedExam = $request->query('exam') ? Exam::find($request->query('exam')) : Exam::latest()->first();
+        return view('students.show', compact('student', 'exams', 'selectedExam'));
     }
 
     /**
@@ -144,5 +251,51 @@ class StudentController extends Controller
         $student->user->delete(); // Soft delete user
         $student->delete(); // Soft delete profile
         return redirect()->route('students.index')->with('success', 'Student deleted successfully.');
+    }
+
+    /**
+     * Store a guardian for this student
+     */
+    public function storeGuardian(Request $request, Student $student)
+    {
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password' => ['nullable', 'confirmed', 'min:8'],
+            'phone_number' => ['required', 'string', 'max:20'],
+            'relationship' => ['required', 'string', 'max:50'],
+            'address' => ['nullable', 'string'],
+            'occupation' => ['nullable', 'string', 'max:100'],
+            'is_primary_contact' => ['nullable', 'boolean'],
+            'can_pickup' => ['nullable', 'boolean'],
+        ]);
+
+        DB::transaction(function () use ($request, $student) {
+            // Create User account for guardian
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password ?? \Illuminate\Support\Str::random(12)),
+                'role_id' => Role::where('slug', 'guardian')->first()->id,
+                'is_active' => true,
+            ]);
+
+            // Create Guardian profile
+            $guardian = \App\Models\Guardian::create([
+                'user_id' => $user->id,
+                'phone_number' => $request->phone_number,
+                'relationship' => $request->relationship,
+                'address' => $request->address,
+                'occupation' => $request->occupation,
+            ]);
+
+            // Attach guardian to student with pivot data
+            $student->guardians()->attach($guardian->id, [
+                'is_primary_contact' => $request->boolean('is_primary_contact', false),
+                'can_pickup' => $request->boolean('can_pickup', true),
+            ]);
+        });
+
+        return redirect()->route('students.show', $student)->with('success', 'Guardian added successfully.');
     }
 }

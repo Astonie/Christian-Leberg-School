@@ -14,7 +14,7 @@
                             <h3 class="text-2xl font-bold">{{ $teacher->user->name }}</h3>
                             <p class="text-gray-500">{{ $teacher->qualification }} - {{ $teacher->specialization }}</p>
                         </div>
-                        <a href="{{ route('teachers.edit', $teacher) }}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">
+                        <a href="{{ route('teachers.edit', $teacher) }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                             Edit Teacher
                         </a>
                     </div>
@@ -56,6 +56,9 @@
                              <a href="{{ route('teachers.subjects.index', $teacher) }}" class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded border border-gray-300">
                                 Manage Subjects
                              </a>
+                                      <a href="{{ route('admin.teachers.assignments.edit', $teacher) }}" class="ml-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded border border-gray-300">
+                                          Manage Assignments
+                                      </a>
                         </div>
                     </div>
 
@@ -65,15 +68,50 @@
                         @if($teacher->streams->count() > 0)
                              <ul class="list-disc pl-5">
                                 @foreach($teacher->streams as $stream)
-                                    <li>{{ $stream->class->name ?? 'Unknown Class' }} - {{ $stream->name }}
+                                    <li>
+                                        {{ $stream->full_name }}
                                         @if($stream->pivot->is_class_teacher)
                                             <span class="text-xs font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded ml-2">Class Teacher</span>
                                         @endif
+                                        <a href="{{ route('admin.teachers.assignments.edit', ['teacher' => $teacher, 'highlight_stream' => $stream->id]) }}" class="ml-3 text-sm text-blue-600 hover:underline">Edit Assignment</a>
                                     </li>
                                 @endforeach
                             </ul>
                         @else
                             <p class="text-gray-500 italic">No classes assigned yet.</p>
+                        @endif
+                    </div>
+
+                    <!-- Assigned Subject Summary -->
+                    <div class="mt-8">
+                        <h3 class="font-semibold text-lg border-b pb-2 mb-4">Assigned Subject Summary</h3>
+                        @if(!empty($streamAssignments) && count($streamAssignments) > 0)
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stream</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class Teacher</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    @foreach($streamAssignments as $sa)
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $sa['stream']->full_name }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $sa['subject']?->name ?? '—' }} {{ $sa['subject']?->code ? '(' . $sa['subject']->code . ')' : '' }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                @if($sa['is_class_teacher'])
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Yes</span>
+                                                @else
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-700">No</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        @else
+                            <p class="text-gray-500 italic">No assignments configured yet.</p>
                         @endif
                     </div>
                 </div>

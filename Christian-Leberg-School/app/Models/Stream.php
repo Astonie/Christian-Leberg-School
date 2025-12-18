@@ -25,7 +25,7 @@ class Stream extends Model
     public function students()
     {
         return $this->belongsToMany(Student::class, 'student_stream')
-                    ->withPivot('academic_year_id', 'enrollment_date', 'is_active')
+                    ->withPivot('academic_year_id', 'term_id', 'enrollment_date', 'is_active')
                     ->withTimestamps();
     }
 
@@ -39,5 +39,15 @@ class Stream extends Model
     public function getClassTeacherAttribute()
     {
         return $this->teachers()->wherePivot('is_class_teacher', true)->first();
+    }
+
+    public function getFullNameAttribute()
+    {
+        $class = $this->schoolClass?->name;
+        $year = $this->academicYear?->name;
+        $stream = $this->name;
+
+        // Example: "Grade 1 A (2025)"
+        return trim(sprintf('%s %s%s', $class, $stream, $year ? " ({$year})" : ''));
     }
 }

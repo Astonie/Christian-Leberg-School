@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ config('app.name', 'Christian Leberg School') }}</title>
+    <title>{{ config('app.name', 'Christian Liebig School') }}</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -61,18 +61,18 @@
         <!-- Background Elements -->
         <div class="absolute inset-0 hero-pattern z-0 pointer-events-none"></div>
         <div class="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 rounded-full bg-brand-200 blur-3xl opacity-30 z-0"></div>
-        <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 rounded-full bg-purple-200 blur-3xl opacity-30 z-0"></div>
+        <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 rounded-full bg-cyan-200 blur-3xl opacity-30 z-0"></div>
 
         <!-- Navigation -->
         <nav class="relative z-50 w-full glass sticky top-0 border-b border-slate-200/60">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between items-center h-20">
                     <div class="flex-shrink-0 flex items-center gap-3">
-                        <div class="w-10 h-10 bg-gradient-to-br from-brand-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                        <div class="w-10 h-10 bg-gradient-to-br from-brand-500 to-cyan-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
                             CL
                         </div>
                         <span class="font-bold text-xl tracking-tight text-slate-900">
-                            Christian Leberg <span class="text-brand-600">School</span>
+                            Christian Liebig <span class="text-brand-600">School</span>
                         </span>
                     </div>
                     <div class="hidden md:flex items-center space-x-8">
@@ -104,7 +104,7 @@
                         </div>
                         <h1 class="text-5xl lg:text-7xl font-bold tracking-tight text-slate-900 leading-[1.1]">
                             Excellence in <br>
-                            <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-purple-600">Education</span>
+                            <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-cyan-600">Education</span>
                         </h1>
                         <p class="text-lg text-slate-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
                             Empowering the next generation with a world-class curriculum, state-of-the-art facilities, and a community dedicated to holistic growth.
@@ -129,7 +129,7 @@
                     
                     <!-- Decorative visuals -->
                     <div class="relative lg:h-[600px] hidden lg:block">
-                         <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-br from-brand-100 to-purple-100 rounded-full blur-3xl opacity-60"></div>
+                         <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-br from-brand-100 to-cyan-100 rounded-full blur-3xl opacity-60"></div>
                          <!-- Abstract Grid/Card visuals -->
                          <div class="relative z-10 grid grid-cols-2 gap-4 p-4 glass rounded-3xl shadow-2xl border border-white/50 rotate-3 hover:rotate-0 transition-all duration-700">
                             <div class="space-y-4">
@@ -159,9 +159,9 @@
                                          <span class="text-xs text-slate-500">Real-time updates</span>
                                     </div>
                                 </div>
-                                <div class="bg-purple-600 p-4 rounded-2xl shadow-lg h-40 flex flex-col justify-center text-white text-center">
+                                <div class="bg-cyan-600 p-4 rounded-2xl shadow-lg h-40 flex flex-col justify-center text-white text-center">
                                     <span class="font-bold text-xl">Join Us</span>
-                                    <span class="text-purple-200 text-sm">Be part of the future</span>
+                                    <span class="text-cyan-200 text-sm">Be part of the future</span>
                                 </div>
                             </div>
                          </div>
@@ -190,7 +190,7 @@
 
                     <!-- Feature 2 -->
                     <div class="p-8 bg-slate-50 rounded-2xl border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                        <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center text-purple-600 mb-6">
+                        <div class="w-14 h-14 bg-cyan-100 rounded-xl flex items-center justify-center text-cyan-600 mb-6">
                             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         </div>
                         <h3 class="text-xl font-bold text-slate-900 mb-3">Arts & Culture</h3>
