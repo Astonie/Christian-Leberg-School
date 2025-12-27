@@ -64,6 +64,7 @@ class AcademicYearController extends Controller
      */
     public function edit(AcademicYear $academicYear)
     {
+        $academicYear->load('terms');
         return view('academic-years.edit', compact('academicYear'));
     }
 

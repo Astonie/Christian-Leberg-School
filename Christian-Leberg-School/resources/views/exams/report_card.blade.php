@@ -68,7 +68,7 @@
                         </div>
                         <div class="flex">
                             <span class="font-semibold text-gray-700 w-32">Term:</span>
-                            <span class="text-gray-900">{{ $exam->term }}</span>
+                            <span class="text-gray-900">{{ $exam->term->name }}</span>
                         </div>
                         <div class="flex">
                             <span class="font-semibold text-gray-700 w-32">Date:</span>

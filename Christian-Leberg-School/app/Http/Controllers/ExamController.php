@@ -11,22 +11,92 @@ use Illuminate\Http\Request;
 
 class ExamController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $exams = Exam::with('academicYear')->latest()->paginate(10);
-        return view('exams.index', compact('exams'));
+        $archived = $request->get('archived', '0'); // Default to not archived
+        
+        // Include soft deleted exams when viewing archived
+        $query = $archived === '1' 
+            ? Exam::onlyTrashed()->with(['academicYear', 'term', 'examType'])
+            : Exam::with(['academicYear', 'term', 'examType']);
+
+        // Get filter parameters
+        $academicYearId = $request->get('academic_year');
+        $termId = $request->get('term');
+        $examTypeId = $request->get('exam_type');
+        $status = $request->get('status');
+        $search = $request->get('search');
+
+        // Check if any filters were actually submitted
+        $hasFilters = $request->has(['academic_year', 'term', 'exam_type', 'status', 'search']);
+
+        // Apply filters
+        if ($academicYearId) {
+            // User selected a specific year
+            $query->where('academic_year_id', $academicYearId);
+        } elseif (!$hasFilters && $archived === '0') {
+            // No filters submitted and not viewing archived - default to current active year
+            $activeYear = AcademicYear::where('is_active', true)->first();
+            if ($activeYear) {
+                $query->where('academic_year_id', $activeYear->id);
+            }
+        }
+        // If hasFilters is true but academicYearId is empty, user selected "All Years" - show all
+
+        if ($termId) {
+            $query->where('term_id', $termId);
+        }
+
+        if ($examTypeId) {
+            $query->where('exam_type_id', $examTypeId);
+        }
+
+        if ($search) {
+            $query->where('name', 'like', '%' . $search . '%');
+        }
+
+        // Status filter (only apply to non-archived exams)
+        if ($archived === '0') {
+            if ($status === 'active') {
+                $query->where('end_date', '>=', now());
+            } elseif ($status === 'completed') {
+                $query->where('end_date', '<', now());
+            }
+        }
+
+        $exams = $query->latest('start_date')->paginate(15)->withQueryString();
+
+        // Get filter options
+        $academicYears = AcademicYear::orderBy('name', 'desc')->get();
+        $terms = \App\Models\Term::with('academicYear')->orderBy('academic_year_id', 'desc')->get();
+        $examTypes = \App\Models\ExamType::all();
+
+        // Statistics
+        $activeYear = AcademicYear::where('is_active', true)->first();
+        $stats = [
+            'total' => Exam::count(),
+            'current_year' => $activeYear ? Exam::where('academic_year_id', $activeYear->id)->count() : 0,
+            'active' => Exam::where('end_date', '>=', now())->count(),
+            'archived' => Exam::onlyTrashed()->count(),
+        ];
+
+        return view('exams.index', compact('exams', 'academicYears', 'terms', 'examTypes', 'stats'));
     }
 
     public function create()
     {
         $years = AcademicYear::with('terms')->get();
         $activeYear = AcademicYear::active()->first();
+        
+        // Load only terms for the active year initially (for better UX)
+        $terms = $activeYear ? $activeYear->terms : collect();
+        
         $examTypes = \App\Models\ExamType::all();
         $gradingScales = \App\Models\GradingScale::all();
         $subjects = \App\Models\Subject::orderBy('name')->get();
         $classes = SchoolClass::orderBy('name')->get();
         
-        return view('exams.create', compact('years', 'activeYear', 'examTypes', 'gradingScales', 'subjects', 'classes'));
+        return view('exams.create', compact('years', 'activeYear', 'terms', 'examTypes', 'gradingScales', 'subjects', 'classes'));
     }
 
     public function store(Request $request)
@@ -34,49 +104,204 @@ class ExamController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'academic_year_id' => ['required', 'exists:academic_years,id'],
-            'term_id' => ['nullable', 'exists:terms,id'],
             'exam_type_id' => ['nullable', 'exists:exam_types,id'],
             'grading_scale_id' => ['nullable', 'exists:grading_scales,id'],
-            'term' => ['required', 'string'],
+            'term_id' => ['required', 'exists:terms,id'],
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
             'description' => ['nullable', 'string'],
             'subjects' => ['nullable', 'array'],
             'subjects.*' => ['exists:subjects,id'],
             'classes' => ['nullable', 'array'],
-            'classes.*' => ['exists:school_classes,id'],
+            'classes.*' => ['exists:classes,id'],
         ]);
 
         // Create the exam
         $exam = Exam::create([
             'name' => $data['name'],
             'academic_year_id' => $data['academic_year_id'],
-            'term_id' => $data['term_id'] ?? null,
             'exam_type_id' => $data['exam_type_id'] ?? null,
             'grading_scale_id' => $data['grading_scale_id'] ?? null,
-            'term' => $data['term'],
+            'term_id' => $data['term_id'],
             'start_date' => $data['start_date'],
             'end_date' => $data['end_date'],
             'description' => $data['description'] ?? null,
         ]);
 
         // Attach subjects if selected
-        if (!empty($data['subjects'])) {
+        if (isset($data['subjects']) && is_array($data['subjects']) && count($data['subjects']) > 0) {
             $exam->subjects()->attach($data['subjects']);
         }
 
         // Attach classes if selected
-        if (!empty($data['classes'])) {
+        if (isset($data['classes']) && is_array($data['classes']) && count($data['classes']) > 0) {
             $exam->classes()->attach($data['classes']);
         }
 
-        return redirect()->route('exams.index')->with('success', 'Exam created successfully with ' . count($data['subjects'] ?? []) . ' subjects and ' . count($data['classes'] ?? []) . ' classes.');
+        $subjectsCount = isset($data['subjects']) ? count($data['subjects']) : 0;
+        $classesCount = isset($data['classes']) ? count($data['classes']) : 0;
+
+        return redirect()->route('exams.index')->with('success', "Exam created successfully with {$subjectsCount} subject(s) and {$classesCount} class(es).");
     }
 
     public function show(Exam $exam)
     {
-        $exam->load('results.student', 'academicYear');
-        return view('exams.show', compact('exam'));
+        $exam->load([
+            'academicYear',
+            'term',
+            'examType',
+            'gradingScale',
+            'subjects',
+            'classes.streams',
+            'results.student.user',
+            'results.subject'
+        ]);
+
+        // Calculate statistics
+        $totalStudents = Student::whereHas('streams', function($q) use ($exam) {
+            $q->whereIn('class_id', $exam->classes->pluck('id'))
+              ->where('student_stream.academic_year_id', $exam->academic_year_id)
+              ->where('student_stream.is_active', true);
+        })->count();
+
+        $resultsEntered = $exam->results()->distinct('student_id')->count('student_id');
+        $totalSubjects = $exam->subjects->count();
+        $totalClasses = $exam->classes->count();
+        $expectedResults = $totalStudents * $totalSubjects;
+        $actualResults = $exam->results->count();
+        $completionPercentage = $expectedResults > 0 ? round(($actualResults / $expectedResults) * 100, 1) : 0;
+
+        // Get top performers
+        $topPerformers = $exam->results()
+            ->selectRaw('student_id, AVG(marks) as average')
+            ->groupBy('student_id')
+            ->orderByDesc('average')
+            ->limit(5)
+            ->with('student.user')
+            ->get();
+
+        return view('exams.show', compact(
+            'exam',
+            'totalStudents',
+            'resultsEntered',
+            'totalSubjects',
+            'totalClasses',
+            'expectedResults',
+            'actualResults',
+            'completionPercentage',
+            'topPerformers'
+        ));
+    }
+
+    public function edit(Exam $exam)
+    {
+        $years = AcademicYear::with('terms')->orderBy('name', 'desc')->get();
+        $activeYear = AcademicYear::where('is_active', true)->first();
+        $examTypes = \App\Models\ExamType::all();
+        $gradingScales = \App\Models\GradingScale::all();
+        $subjects = \App\Models\Subject::orderBy('name')->get();
+        $classes = SchoolClass::orderBy('name')->get();
+        
+        // Get terms for the exam's academic year
+        $terms = \App\Models\Term::where('academic_year_id', $exam->academic_year_id)
+            ->orderBy('start_date')
+            ->get();
+        
+        $exam->load('subjects', 'classes', 'term.academicYear');
+        
+        return view('exams.edit', compact('exam', 'years', 'activeYear', 'terms', 'examTypes', 'gradingScales', 'subjects', 'classes'));
+    }
+
+    public function update(Request $request, Exam $exam)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'academic_year_id' => ['required', 'exists:academic_years,id'],
+            'exam_type_id' => ['nullable', 'exists:exam_types,id'],
+            'grading_scale_id' => ['nullable', 'exists:grading_scales,id'],
+            'term_id' => ['required', 'exists:terms,id'],
+            'start_date' => ['required', 'date'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+            'description' => ['nullable', 'string'],
+            'subjects' => ['nullable', 'array'],
+            'subjects.*' => ['exists:subjects,id'],
+            'classes' => ['nullable', 'array'],
+            'classes.*' => ['exists:classes,id'],
+        ]);
+
+        // Update the exam
+        $exam->update([
+            'name' => $data['name'],
+            'academic_year_id' => $data['academic_year_id'],
+            'exam_type_id' => $data['exam_type_id'] ?? null,
+            'grading_scale_id' => $data['grading_scale_id'] ?? null,
+            'term_id' => $data['term_id'],
+            'start_date' => $data['start_date'],
+            'end_date' => $data['end_date'],
+            'description' => $data['description'] ?? null,
+        ]);
+
+        // Sync subjects
+        if (isset($data['subjects'])) {
+            $exam->subjects()->sync($data['subjects']);
+        } else {
+            $exam->subjects()->detach();
+        }
+
+        // Sync classes
+        if (isset($data['classes'])) {
+            $exam->classes()->sync($data['classes']);
+        } else {
+            $exam->classes()->detach();
+        }
+
+        $subjectsCount = isset($data['subjects']) ? count($data['subjects']) : 0;
+        $classesCount = isset($data['classes']) ? count($data['classes']) : 0;
+
+        return redirect()->route('exams.show', $exam)->with('success', "Exam updated successfully with {$subjectsCount} subject(s) and {$classesCount} class(es).");
+    }
+
+    public function destroy(Exam $exam)
+    {
+        $exam->update(['status' => 'inactive']);
+        $exam->delete();
+        return redirect()->route('exams.index')->with('success', 'Exam archived successfully. Status changed to inactive.');
+    }
+
+    public function restore($id)
+    {
+        $exam = Exam::withTrashed()->findOrFail($id);
+        $exam->restore();
+        $exam->update(['status' => 'active']);
+        return redirect()->route('exams.index')->with('success', 'Exam restored successfully. Status changed to active.');
+    }
+    
+    /**
+     * Show component breakdown for exam
+     */
+    public function componentBreakdown(Exam $exam)
+    {
+        $exam->load(['academicYear', 'term', 'assessmentStructure.components']);
+        
+        // Get all students for this exam
+        $students = Student::whereHas('streams', function($q) use ($exam) {
+            $q->whereIn('class_id', $exam->classes->pluck('id'))
+              ->where('student_stream.academic_year_id', $exam->academic_year_id)
+              ->where('student_stream.is_active', true);
+        })->orderBy('first_name')->get();
+        
+        $selectedStudentId = request()->query('student_id');
+        $selectedStudent = $selectedStudentId ? Student::find($selectedStudentId) : null;
+        
+        $results = collect();
+        if ($selectedStudent) {
+            $results = ExamResult::where('exam_id', $exam->id)
+                ->where('student_id', $selectedStudent->id)
+                ->with('subject')
+                ->get();
+        }
+        
+        return view('exams.component-breakdown', compact('exam', 'students', 'selectedStudentId', 'selectedStudent', 'results'));
     }
 
     public function report(Exam $exam)
@@ -119,7 +344,7 @@ class ExamController extends Controller
         // Only admin or class teacher may generate class reports
         if (! $user->hasRole('admin')) {
             // check if teacher is class teacher for any stream in this class for this academic year
-            $isClassTeacher = $class->streams()->where('academic_year_id', $exam->academic_year_id)->get()->contains(function ($stream) use ($user) {
+            $isClassTeacher = $class->streams()->where('streams.academic_year_id', $exam->academic_year_id)->get()->contains(function ($stream) use ($user) {
                 return $stream->class_teacher?->id === $user->teacher?->id;
             });
 
@@ -336,4 +561,71 @@ class ExamController extends Controller
 
         return compact('exam', 'student', 'class', 'stream', 'results', 'rows', 'total', 'totalPossible', 'average', 'subjectsPassed', 'points', 'examStatus', 'positionInStream', 'positionInClass', 'streamTotals', 'classTotals');
     }
+
+    /**
+     * Release exam results for students and guardians to view
+     */
+    public function releaseResults(Exam $exam)
+    {
+        $exam->update([
+            'results_released' => true,
+            'results_released_at' => now(),
+            'released_by' => auth()->id(),
+        ]);
+
+        return redirect()->back()->with('success', 'Exam results have been released successfully. Students and guardians can now access them.');
+    }
+
+    /**
+     * Withdraw/unreleased exam results
+     */
+    public function withdrawResults(Exam $exam)
+    {
+        $exam->update([
+            'results_released' => false,
+            'results_released_at' => null,
+            'released_by' => null,
+        ]);
+
+        return redirect()->back()->with('success', 'Exam results have been withdrawn. Students and guardians can no longer access them.');
+    }
+
+    /**
+     * Manage student result access (block/unblock)
+     */
+    public function manageStudentAccess(Request $request, Exam $exam)
+    {
+        $request->validate([
+            'student_ids' => 'required|array',
+            'student_ids.*' => 'exists:students,id',
+            'action' => 'required|in:block,unblock',
+            'reason' => 'required_if:action,block|nullable|string|max:500',
+        ]);
+
+        $studentIds = $request->student_ids;
+        $action = $request->action;
+
+        if ($action === 'block') {
+            Student::whereIn('id', $studentIds)->update([
+                'results_access_blocked' => true,
+                'results_block_reason' => $request->reason,
+                'blocked_by' => auth()->id(),
+                'blocked_at' => now(),
+            ]);
+
+            $message = count($studentIds) . ' student(s) have been blocked from accessing exam results.';
+        } else {
+            Student::whereIn('id', $studentIds)->update([
+                'results_access_blocked' => false,
+                'results_block_reason' => null,
+                'blocked_by' => null,
+                'blocked_at' => null,
+            ]);
+
+            $message = count($studentIds) . ' student(s) can now access exam results.';
+        }
+
+        return redirect()->back()->with('success', $message);
+    }
 }
+

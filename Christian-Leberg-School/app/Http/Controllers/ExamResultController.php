@@ -31,7 +31,7 @@ class ExamResultController extends Controller
             
             // Get teacher's assigned stream IDs for this academic year
             $teacherStreamIds = $teacher->streams()
-                ->where('academic_year_id', $exam->academic_year_id)
+                ->where('stream_teacher.academic_year_id', $exam->academic_year_id)
                 ->pluck('streams.id')
                 ->toArray();
             
@@ -46,6 +46,7 @@ class ExamResultController extends Controller
         
         // Optionally filter by class_id
         $classId = request()->query('class_id');
+        $selectedSubjectId = request()->query('subject_id');
 
         // List only students enrolled in the exam's academic year
         $studentQuery = Student::with(['user', 'streams' => function ($q) use ($exam) {
@@ -64,6 +65,16 @@ class ExamResultController extends Controller
         });
 
         $students = $studentQuery->get();
+        
+        // Get existing results for the selected subject if provided
+        $existingResults = [];
+        if ($selectedSubjectId) {
+            $existingResults = ExamResult::where('exam_id', $exam->id)
+                ->where('subject_id', $selectedSubjectId)
+                ->whereIn('student_id', $students->pluck('id'))
+                ->get()
+                ->keyBy('student_id');
+        }
 
         // If teacher, only show classes that have streams they're assigned to
         if ($teacherStreamIds !== null) {
@@ -76,7 +87,7 @@ class ExamResultController extends Controller
             $classes = \App\Models\SchoolClass::with('streams')->get();
         }
 
-        return view('exams.results.create', compact('exam', 'students', 'subjects', 'classes', 'classId'));
+        return view('exams.results.create', compact('exam', 'students', 'subjects', 'classes', 'classId', 'selectedSubjectId', 'existingResults'));
     }
 
     public function createForSubject(Request $request, Exam $exam, Subject $subject)
@@ -94,7 +105,10 @@ class ExamResultController extends Controller
         }
 
         // Get streams where teacher teaches this subject in that academic year
-        $streams = $teacher->streams()->wherePivot('subject_id', $subject->id)->where('academic_year_id', $exam->academic_year_id)->get();
+        $streams = $teacher->streams()
+            ->wherePivot('subject_id', $subject->id)
+            ->where('stream_teacher.academic_year_id', $exam->academic_year_id)
+            ->get();
 
         $streamIds = $streams->pluck('id')->all();
 
@@ -102,6 +116,15 @@ class ExamResultController extends Controller
         $streamId = $request->query('stream_id');
         if ($streamId && in_array((int) $streamId, $streamIds)) {
             $streamIds = [(int) $streamId];
+        }
+        
+        // If class_id is provided, filter streams by that class
+        $classId = $request->query('class_id');
+        if ($classId) {
+            $streamIds = \App\Models\Stream::whereIn('id', $streamIds)
+                ->where('class_id', $classId)
+                ->pluck('id')
+                ->toArray();
         }
 
         // Students in those streams (and active enrollment)
@@ -112,9 +135,18 @@ class ExamResultController extends Controller
         $subjects = [$subject];
 
         $classes = \App\Models\SchoolClass::with('streams')->get();
-        $classId = null;
+        
+        // Set the selected subject ID (from route parameter)
+        $selectedSubjectId = $subject->id;
+        
+        // Get existing results for this subject
+        $existingResults = ExamResult::where('exam_id', $exam->id)
+            ->where('subject_id', $subject->id)
+            ->whereIn('student_id', $students->pluck('id'))
+            ->get()
+            ->keyBy('student_id');
 
-        return view('exams.results.create', compact('exam', 'students', 'subjects', 'classes', 'classId'));
+        return view('exams.results.create', compact('exam', 'students', 'subjects', 'classes', 'classId', 'selectedSubjectId', 'existingResults'));
     }
 
     public function storeForSubject(Request $request, Exam $exam, Subject $subject)
@@ -169,7 +201,7 @@ class ExamResultController extends Controller
             
             // Get teacher's assigned stream IDs for validation
             $teacherStreamIds = $teacher->streams()
-                ->where('academic_year_id', $exam->academic_year_id)
+                ->where('stream_teacher.academic_year_id', $exam->academic_year_id)
                 ->pluck('streams.id')
                 ->toArray();
             
@@ -191,6 +223,7 @@ class ExamResultController extends Controller
                 }),
             ],
             'results.*.marks' => ['required', 'numeric', 'min:0', 'max:100'],
+            'results.*.force_update' => ['nullable', 'boolean'],
         ]);
 
         // If teacher, verify all students are in their assigned streams
@@ -208,8 +241,45 @@ class ExamResultController extends Controller
             }
         }
 
+        // Check for existing results that would be overwritten
+        $existingResults = [];
+        $conflictingStudents = [];
+        foreach ($data['results'] as $index => $item) {
+            if (empty($item['marks']) && $item['marks'] !== '0') {
+                continue; // Skip empty marks
+            }
+            
+            $existing = ExamResult::where('exam_id', $exam->id)
+                ->where('student_id', $item['student_id'])
+                ->where('subject_id', $data['subject_id'])
+                ->first();
+            
+            if ($existing && !($item['force_update'] ?? false)) {
+                $student = Student::find($item['student_id']);
+                $conflictingStudents[] = [
+                    'student_id' => $item['student_id'],
+                    'student_name' => $student->user->name,
+                    'existing_marks' => $existing->marks,
+                    'new_marks' => $item['marks'],
+                    'index' => $index
+                ];
+            }
+        }
+
+        // If there are conflicts and force_update is not set, return with error
+        if (!empty($conflictingStudents)) {
+            return back()->with('error', 'Some students already have marks entered.')
+                        ->with('conflicts', $conflictingStudents)
+                        ->with('form_data', $data)
+                        ->withInput();
+        }
+
         DB::transaction(function () use ($exam, $data) {
             foreach ($data['results'] as $item) {
+                if (empty($item['marks']) && $item['marks'] !== '0') {
+                    continue; // Skip empty marks
+                }
+                
                 $subjectId = $data['subject_id'];
 
                 ExamResult::updateOrCreate(
@@ -219,7 +289,7 @@ class ExamResultController extends Controller
             }
         });
 
-        return redirect()->route('exams.show', $exam)->with('success', 'Results saved.');
+        return redirect()->route('exams.show', $exam)->with('success', 'Results saved successfully.');
     }
 
     public function import(Request $request, Exam $exam)
@@ -412,7 +482,7 @@ class ExamResultController extends Controller
         if ($user->teacher && !$user->hasRole('admin')) {
             $teacher = $user->teacher;
             $teacherStreamIds = $teacher->streams()
-                ->where('academic_year_id', $exam->academic_year_id)
+                ->where('stream_teacher.academic_year_id', $exam->academic_year_id)
                 ->pluck('streams.id')
                 ->toArray();
             
@@ -450,7 +520,7 @@ class ExamResultController extends Controller
                 ->get();
             
             $teacherStreamIds = $teacher->streams()
-                ->where('academic_year_id', $exam->academic_year_id)
+                ->where('stream_teacher.academic_year_id', $exam->academic_year_id)
                 ->pluck('streams.id')
                 ->toArray();
             
@@ -497,7 +567,7 @@ class ExamResultController extends Controller
             
             // Check if student is in teacher's assigned streams
             $teacherStreamIds = $teacher->streams()
-                ->where('academic_year_id', $examResult->exam->academic_year_id)
+                ->where('stream_teacher.academic_year_id', $examResult->exam->academic_year_id)
                 ->pluck('streams.id')
                 ->toArray();
             
@@ -563,7 +633,7 @@ class ExamResultController extends Controller
                     
                     // Check if student is in teacher's streams
                     $teacherStreamIds = $teacher->streams()
-                        ->where('academic_year_id', $result->exam->academic_year_id)
+                        ->where('stream_teacher.academic_year_id', $result->exam->academic_year_id)
                         ->pluck('streams.id')
                         ->toArray();
                     
@@ -638,84 +708,43 @@ class ExamResultController extends Controller
     }
 
     /**
-     * Display marks entry interface for teachers (simplified grid view)
+     * Redirect old entry route to the improved create interface
      */
     public function entry(Request $request)
     {
-        $user = auth()->user();
-        $teacher = $user->teacher;
-
-        if (!$teacher && !$user->hasRole('admin')) {
-            return redirect()->route('dashboard')->with('error', 'Access denied.');
+        // If all parameters provided, redirect to the improved interface
+        if ($request->filled(['exam_id', 'subject_id', 'stream_id'])) {
+            $exam = Exam::findOrFail($request->exam_id);
+            $subject = Subject::findOrFail($request->subject_id);
+            
+            return redirect()->route('exams.results.create_for_subject', [
+                'exam' => $exam->id,
+                'subject' => $subject->id,
+                'stream_id' => $request->stream_id
+            ]);
         }
-
-        // Get active academic year
+        
+        // If only exam_id provided, redirect with it
+        if ($request->exam_id) {
+            $exam = Exam::findOrFail($request->exam_id);
+            return redirect()->route('exams.results.create', $exam);
+        }
+        
+        // Default: redirect to first available exam
         $activeYear = \App\Models\AcademicYear::active()->first();
         if (!$activeYear) {
             return redirect()->route('dashboard')->with('error', 'No active academic year found.');
         }
-
-        // Get exams for the active year
-        $exams = Exam::where('academic_year_id', $activeYear->id)
+        
+        $exam = Exam::where('academic_year_id', $activeYear->id)
             ->orderBy('start_date', 'desc')
-            ->get();
-
-        // Get subjects and streams based on user role
-        if ($teacher && !$user->hasRole('admin')) {
-            // Get teacher's subjects
-            $subjects = $teacher->subjects()
-                ->wherePivot('academic_year_id', $activeYear->id)
-                ->orderBy('name')
-                ->get();
-
-            // Get teacher's streams
-            $streams = $teacher->streams()
-                ->wherePivot('academic_year_id', $activeYear->id)
-                ->with('schoolClass')
-                ->orderBy('name')
-                ->get();
-        } else {
-            // Admin sees all
-            $subjects = Subject::orderBy('name')->get();
-            $streams = \App\Models\Stream::with('schoolClass')->orderBy('name')->get();
+            ->first();
+            
+        if (!$exam) {
+            return redirect()->route('dashboard')->with('error', 'No exams found for the active academic year.');
         }
-
-        // If filters are applied, get students
-        $students = collect();
-        $selectedExam = null;
-        $selectedSubject = null;
-        $selectedStream = null;
-        $existingResults = collect();
-
-        if ($request->filled(['exam_id', 'subject_id', 'stream_id'])) {
-            $selectedExam = Exam::findOrFail($request->exam_id);
-            $selectedSubject = Subject::findOrFail($request->subject_id);
-            $selectedStream = \App\Models\Stream::with('schoolClass')->findOrFail($request->stream_id);
-
-            // Get students in this stream
-            $students = Student::whereHas('streams', function($q) use ($selectedStream, $activeYear) {
-                $q->where('streams.id', $selectedStream->id)
-                  ->where('student_stream.academic_year_id', $activeYear->id);
-            })->with('user')->orderBy('first_name')->orderBy('last_name')->get();
-
-            // Get existing results
-            $existingResults = ExamResult::where('exam_id', $selectedExam->id)
-                ->where('subject_id', $selectedSubject->id)
-                ->whereIn('student_id', $students->pluck('id'))
-                ->get()
-                ->keyBy('student_id');
-        }
-
-        return view('exam-results.entry', compact(
-            'exams',
-            'subjects',
-            'streams',
-            'students',
-            'selectedExam',
-            'selectedSubject',
-            'selectedStream',
-            'existingResults'
-        ));
+        
+        return redirect()->route('exams.results.create', $exam);
     }
 
     /**
@@ -737,6 +766,24 @@ class ExamResultController extends Controller
         $savedCount = 0;
         $skippedCount = 0;
 
+        // Check authorization
+        $user = auth()->user();
+        $teacher = $user->teacher;
+        $exam = Exam::findOrFail($validated['exam_id']);
+        $subject = Subject::findOrFail($validated['subject_id']);
+        
+        if ($teacher && !$user->hasRole('admin')) {
+            // Verify teacher teaches this subject
+            $teachesSubject = $teacher->subjects()
+                ->wherePivot('academic_year_id', $exam->academic_year_id)
+                ->where('subjects.id', $subject->id)
+                ->exists();
+            
+            if (!$teachesSubject) {
+                return back()->with('error', 'You are not authorized to enter marks for this subject.');
+            }
+        }
+
         DB::beginTransaction();
         try {
             foreach ($validated['marks'] as $markData) {
@@ -751,6 +798,7 @@ class ExamResultController extends Controller
                     $markData['grade'] = $this->calculateGradeForMarks($markData['marks']);
                 }
 
+                // Use updateOrCreate to handle both new entries and edits
                 ExamResult::updateOrCreate(
                     [
                         'exam_id' => $validated['exam_id'],

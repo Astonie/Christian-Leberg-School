@@ -70,19 +70,26 @@
 
                         <!-- Term -->
                         <div>
-                            <label for="term" class="block text-sm font-bold text-gray-900 mb-2">
+                            <label for="term_id" class="block text-sm font-bold text-gray-900 mb-2">
                                 Term <span class="text-red-500">*</span>
                             </label>
-                            <select name="term" id="term" required
+                            <select name="term_id" id="term_id" required
                                 class="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
                                 <option value="">Select Term</option>
-                                <option value="Term 1" {{ old('term') == 'Term 1' ? 'selected' : '' }}>Term 1</option>
-                                <option value="Term 2" {{ old('term') == 'Term 2' ? 'selected' : '' }}>Term 2</option>
-                                <option value="Term 3" {{ old('term') == 'Term 3' ? 'selected' : '' }}>Term 3</option>
+                                @if($terms->isEmpty())
+                                    <option disabled>No terms available - create terms first</option>
+                                @else
+                                    @foreach($terms as $term)
+                                        <option value="{{ $term->id }}" {{ old('term_id') == $term->id ? 'selected' : '' }}>
+                                            {{ $term->name }}
+                                        </option>
+                                    @endforeach
+                                @endif
                             </select>
-                            @error('term')
+                            @error('term_id')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
+                            <p class="mt-1 text-xs text-gray-500">Terms shown for {{ $activeYear?->name ?? 'selected' }} academic year</p>
                         </div>
 
                         <!-- Exam Type -->
@@ -258,4 +265,44 @@
             </div>
         </form>
     </div>
+
+    @push('scripts')
+    <script>
+        // Dynamically load terms when academic year changes
+        const academicYearSelect = document.getElementById('academic_year_id');
+        const termSelect = document.getElementById('term_id');
+        
+        // Store all terms by year for quick lookup
+        const termsByYear = @json($years->mapWithKeys(function($year) {
+            return [$year->id => $year->terms->map(function($term) {
+                return ['id' => $term->id, 'name' => $term->name];
+            })];
+        }));
+        
+        academicYearSelect.addEventListener('change', function() {
+            const selectedYearId = this.value;
+            
+            // Clear existing options except the first one
+            termSelect.innerHTML = '<option value="">Select Term</option>';
+            
+            // Add terms for selected year
+            if (selectedYearId && termsByYear[selectedYearId]) {
+                const terms = termsByYear[selectedYearId];
+                if (terms.length === 0) {
+                    const option = document.createElement('option');
+                    option.disabled = true;
+                    option.textContent = 'No terms available - create terms first';
+                    termSelect.appendChild(option);
+                } else {
+                    terms.forEach(term => {
+                        const option = document.createElement('option');
+                        option.value = term.id;
+                        option.textContent = term.name;
+                        termSelect.appendChild(option);
+                    });
+                }
+            }
+        });
+    </script>
+    @endpush
 </x-app-layout>

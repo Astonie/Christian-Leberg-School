@@ -65,32 +65,27 @@ class GradingEngine
         // total is percentage (0-100)
         $percentage = round($total, 4);
 
-        // Determine grading scale (structure->gradingSystem)
-        $gradingSystem = $structure->gradingSystem;
+        // Determine grading scale (structure->gradingSystem or active system)
+        $gradingSystem = $structure->gradingSystem ?? \App\Models\GradingSystem::where('is_active', true)->first();
         $gradeCode = null;
         $gradeLabel = null;
         $points = null;
 
         if ($gradingSystem) {
-            // If grading_scales table has grading_system_id column, scope by system; otherwise use all scales
-            if (\Illuminate\Support\Facades\Schema::hasColumn('grading_scales', 'grading_system_id')) {
-                $scaleQuery = GradingScale::where('grading_system_id', $gradingSystem->id);
-            } else {
-                $scaleQuery = GradingScale::query();
-            }
+            $scales = GradingScale::where('grading_system_id', $gradingSystem->id)
+                ->orderBy('order')
+                ->get();
 
-            $scale = $scaleQuery->get();
-
-            foreach ($scale as $s) {
-                // Support older schema (min_percentage/max_percentage, label, remark, grade_point)
-                if (isset($s->min_percentage) && isset($s->max_percentage)) {
-                    if ($percentage >= $s->min_percentage && $percentage <= $s->max_percentage) {
-                        // Use label as grade code/label; remark field as verbose label if present
-                        $gradeCode = $s->label;
-                        $gradeLabel = $s->remark ?? $s->label;
-                        $points = $s->grade_point ?? null;
-                        break;
-                    }
+            foreach ($scales as $scale) {
+                // Check both old and new schema fields for compatibility
+                $minScore = $scale->min_score ?? $scale->min_percentage ?? 0;
+                $maxScore = $scale->max_score ?? $scale->max_percentage ?? 100;
+                
+                if ($percentage >= $minScore && $percentage <= $maxScore) {
+                    $gradeCode = $scale->code ?? $scale->label;
+                    $gradeLabel = $scale->description ?? $scale->remark ?? $gradeCode;
+                    $points = $scale->points ?? $scale->grade_point ?? null;
+                    break;
                 }
             }
         }
@@ -102,5 +97,46 @@ class GradingEngine
             'points' => $points,
             'breakdown' => $breakdown,
         ];
+    }
+
+    /**
+     * Save computed result to final_results table
+     */
+    public function saveFinalResult(array $context, array $computed): FinalResult
+    {
+        return FinalResult::updateOrCreate(
+            [
+                'student_id' => $context['student_id'],
+                'subject_id' => $context['subject_id'],
+                'academic_year_id' => $context['academic_year_id'],
+                'term_id' => $context['term_id'] ?? null,
+            ],
+            [
+                'assessment_structure_id' => $context['assessment_structure_id'],
+                'percentage' => $computed['percentage'],
+                'grade_code' => $computed['grade_code'],
+                'grade_label' => $computed['grade_label'],
+                'points' => $computed['points'],
+                'breakdown' => $computed['breakdown'],
+            ]
+        );
+    }
+
+    /**
+     * Calculate final result for a student across all assessment components
+     * and save to final_results table
+     */
+    public function calculateAndSave(int $studentId, int $subjectId, int $academicYearId, ?int $termId, int $assessmentStructureId): FinalResult
+    {
+        $context = [
+            'student_id' => $studentId,
+            'subject_id' => $subjectId,
+            'academic_year_id' => $academicYearId,
+            'term_id' => $termId,
+            'assessment_structure_id' => $assessmentStructureId,
+        ];
+
+        $computed = $this->compute($context);
+        return $this->saveFinalResult($context, $computed);
     }
 }

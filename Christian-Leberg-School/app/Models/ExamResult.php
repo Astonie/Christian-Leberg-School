@@ -10,6 +10,11 @@ class ExamResult extends Model
     use SoftDeletes;
 
     protected $guarded = [];
+    
+    protected $casts = [
+        'is_computed' => 'boolean',
+        'component_breakdown' => 'array',
+    ];
 
     public function exam()
     {
@@ -25,10 +30,63 @@ class ExamResult extends Model
     {
         return $this->belongsTo(Subject::class);
     }
+    
+    /**
+     * Get assessment components related to this exam
+     */
+    public function assessmentComponents()
+    {
+        if (!$this->exam || !$this->exam->assessmentStructure) {
+            return collect();
+        }
+        return $this->exam->assessmentStructure->components;
+    }
+    
+    /**
+     * Validate marks are within acceptable range
+     */
+    public function validateMarks()
+    {
+        if ($this->marks < 0 || $this->marks > 100) {
+            throw new \InvalidArgumentException("Marks must be between 0 and 100. Got: {$this->marks}");
+        }
+        return true;
+    }
+    
+    /**
+     * Get grade remark/description
+     */
+    public function getGradeRemark()
+    {
+        $grade = $this->grade ?? $this->calculateGrade();
+        
+        $remarks = [
+            'A' => 'Excellent',
+            'B' => 'Very Good',
+            'C' => 'Good',
+            'D' => 'Satisfactory',
+            'E' => 'Needs Improvement',
+            'F' => 'Fail'
+        ];
+        
+        return $remarks[$grade] ?? 'N/A';
+    }
 
+    /**
+     * Calculate grade based on marks using exam's grading system or fallback
+     */
     public function calculateGrade()
     {
         $marks = $this->marks;
+        
+        if ($marks === null) {
+            return null;
+        }
+        
+        // Try exam's specific grading scale first
+        if ($this->exam && $this->exam->gradingScale) {
+            return $this->getGradeFromScale($marks, $this->exam->gradingScale);
+        }
         
         // Try to use the active grading system
         $gradingSystem = \App\Models\GradingSystem::where('is_active', true)->first();
@@ -42,6 +100,29 @@ class ExamResult extends Model
         }
         
         // Fallback to default grading
+        return $this->getDefaultGrade($marks);
+    }
+    
+    /**
+     * Get grade from a specific grading scale
+     */
+    protected function getGradeFromScale($marks, $gradingScale)
+    {
+        if ($gradingScale->gradingSystem) {
+            foreach ($gradingScale->gradingSystem->scales->sortBy('order') as $scale) {
+                if ($marks >= $scale->min_score && $marks <= $scale->max_score) {
+                    return $scale->code;
+                }
+            }
+        }
+        return $this->getDefaultGrade($marks);
+    }
+    
+    /**
+     * Default grading if no grading system is configured
+     */
+    protected function getDefaultGrade($marks)
+    {
         if ($marks >= 80) return 'A';
         if ($marks >= 70) return 'B';
         if ($marks >= 60) return 'C';
@@ -70,6 +151,49 @@ class ExamResult extends Model
         if ($marks >= 60) return 6;
         if ($marks >= 50) return 3;
         return 1;
+    }
+    
+    /**
+     * Compute final marks from component scores using GradingEngine
+     */
+    public function computeFromComponents()
+    {
+        if (!$this->exam || !$this->exam->assessmentStructure) {
+            return false;
+        }
+        
+        $gradingEngine = new \App\Services\GradingEngine();
+        
+        try {
+            $result = $gradingEngine->compute([
+                'student_id' => $this->student_id,
+                'subject_id' => $this->subject_id,
+                'academic_year_id' => $this->exam->academic_year_id,
+                'term_id' => $this->exam->term_id,
+                'assessment_structure_id' => $this->exam->assessment_structure_id,
+            ]);
+            
+            $this->computed_marks = $result['percentage'];
+            $this->marks = $result['percentage']; // Also update main marks
+            $this->grade = $result['grade_code'];
+            $this->is_computed = true;
+            $this->component_breakdown = $result['breakdown'];
+            
+            return true;
+        } catch (\Exception $e) {
+            \Log::error("Failed to compute marks for exam result {$this->id}: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Check if this result can be computed from components
+     */
+    public function canBeComputed(): bool
+    {
+        return $this->exam && 
+               $this->exam->assessmentStructure && 
+               $this->exam->assessmentStructure->components->count() > 0;
     }
 
     protected static function booted()

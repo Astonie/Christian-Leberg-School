@@ -29,7 +29,7 @@
                         @endif
                     </div>
                     <div class="mt-6 bg-white/10 rounded-lg p-4">
-                        <h2 class="text-xl font-semibold">{{ $exam->name }} - {{ $exam->term }}</h2>
+                        <h2 class="text-xl font-semibold">{{ $exam->name }} - {{ $exam->term->name }}</h2>
                         <p class="text-sm text-blue-100">{{ $exam->academicYear->name }} | {{ $exam->start_date->format('M d') }} - {{ $exam->end_date->format('M d, Y') }}</p>
                     </div>
                 </div>

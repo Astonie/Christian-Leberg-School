@@ -21,38 +21,50 @@ class TeacherAssignmentController extends Controller
 
     public function edit(Teacher $teacher)
     {
-        $activeYear = AcademicYear::active()->first();
-        
-        // Get all subjects
-        $subjects = Subject::orderBy('name')->get();
-        
-        // Get all streams for active year
-        $streams = Stream::with('schoolClass')
-            ->where('academic_year_id', $activeYear?->id)
-            ->orderBy('name')
-            ->get();
-        
-        // Get teacher's current assignments
-        $assignedSubjects = $teacher->subjects()
-            ->wherePivot('academic_year_id', $activeYear?->id)
-            ->get()
-            ->pluck('id')
-            ->toArray();
-        
-        $assignedStreams = $teacher->streams()
-            ->where('academic_year_id', $activeYear?->id)
-            ->get()
-            ->pluck('id')
-            ->toArray();
-        
-        return view('teachers.assignments.edit', compact(
-            'teacher',
-            'subjects',
-            'streams',
-            'assignedSubjects',
-            'assignedStreams',
-            'activeYear'
-        ));
+        try {
+            $activeYear = AcademicYear::active()->first();
+            
+            // Get all subjects
+            $subjects = Subject::orderBy('name')->get();
+            
+            // Get all streams for active year
+            $streams = Stream::with('schoolClass')
+                ->where('academic_year_id', $activeYear?->id)
+                ->orderBy('name')
+                ->get();
+            
+            // Get teacher's current assignments
+            $assignedSubjects = $teacher->subjects()
+                ->wherePivot('academic_year_id', $activeYear?->id)
+                ->get()
+                ->pluck('id')
+                ->toArray();
+            
+            $assignedStreams = $teacher->streams()
+                ->wherePivot('academic_year_id', $activeYear?->id)
+                ->get()
+                ->pluck('id')
+                ->toArray();
+            
+            return view('teachers.assignments.edit', compact(
+                'teacher',
+                'subjects',
+                'streams',
+                'assignedSubjects',
+                'assignedStreams',
+                'activeYear'
+            ));
+        } catch (\Exception $e) {
+            \Log::error('Error loading teacher assignments edit page', [
+                'teacher_id' => $teacher->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return back()->with('error', config('app.debug') 
+                ? 'Error loading assignments: ' . $e->getMessage()
+                : 'Unable to load teacher assignments. Please try again.');
+        }
     }
 
     public function update(Request $request, Teacher $teacher)

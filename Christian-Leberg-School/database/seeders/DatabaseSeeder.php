@@ -19,8 +19,11 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             AcademicSeeder::class,
             UserSeeder::class,
+            GuardianSeeder::class,
             ExamResultsSeeder::class,
             GradingScaleSeeder::class,
+            TimetablePeriodSeeder::class,
+            TimetableSeeder::class,
         ]);
     }
 }

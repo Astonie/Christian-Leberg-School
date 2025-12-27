@@ -2,11 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Mobile-First Responsive Utilities */
+/* ================================
+   MOBILE-FIRST RESPONSIVE DESIGN
+   ================================ */
+
+@layer base {
+    /* Ensure consistent touch target sizes (minimum 44x44px) */
+    button, 
+    a[role="button"],
+    input[type="submit"],
+    input[type="button"] {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Prevent iOS zoom on input focus */
+    input[type="text"],
+    input[type="number"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="password"],
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+    
+    /* Smooth scrolling */
+    html {
+        scroll-behavior: smooth;
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Optimize for touch */
+    * {
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+        -webkit-touch-callout: none;
+    }
+    
+    button,
+    a {
+        -webkit-user-select: none;
+        user-select: none;
+    }
+}
+
 @layer components {
-    /* Responsive Table Wrapper */
+    /* ================================
+       RESPONSIVE CONTAINERS
+       ================================ */
+    .container-mobile {
+        @apply w-full px-3 sm:px-4 md:px-6 lg:px-8 max-w-7xl mx-auto;
+    }
+    
+    .section-spacing {
+        @apply py-4 sm:py-6 md:py-8;
+    }
+    
+    /* ================================
+       RESPONSIVE TABLES
+       ================================ */
     .table-responsive {
-        @apply w-full overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0;
+        @apply w-full overflow-x-auto -mx-3 sm:mx-0;
     }
     
     .table-responsive table {
@@ -20,7 +76,7 @@
         }
         
         .mobile-card-table tbody tr {
-            @apply block mb-4 bg-white rounded-lg shadow p-4 border border-gray-200;
+            @apply block mb-4 bg-white rounded-lg shadow-sm p-4 border border-gray-200;
         }
         
         .mobile-card-table tbody td {
@@ -29,46 +85,161 @@
         
         .mobile-card-table tbody td:before {
             content: attr(data-label);
-            @apply float-left font-semibold text-gray-700;
+            @apply float-left font-semibold text-gray-700 text-sm;
         }
     }
     
-    /* Touch-Friendly Buttons */
+    /* ================================
+       TOUCH-FRIENDLY COMPONENTS
+       ================================ */
+    /* Buttons */
     .btn-mobile {
-        @apply min-h-[44px] px-4 py-2.5 text-sm sm:text-base;
+        @apply min-h-[48px] sm:min-h-[44px] px-4 sm:px-6 py-3 sm:py-2.5 text-base sm:text-sm font-semibold rounded-lg sm:rounded-xl;
+        @apply active:scale-95 transition-transform duration-150;
     }
     
-    /* Responsive Form Inputs */
+    .btn-mobile-full {
+        @apply w-full sm:w-auto btn-mobile;
+    }
+    
+    /* Form Inputs */
     .input-mobile {
-        @apply min-h-[44px] px-4 py-2.5 text-base;
+        @apply min-h-[48px] sm:min-h-[44px] px-4 py-3 sm:py-2.5 text-base rounded-lg sm:rounded-xl;
+        @apply border-2 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+        @apply transition-all duration-200;
     }
     
-    /* Responsive Grid */
+    .select-mobile {
+        @apply input-mobile appearance-none;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 0.5rem center;
+        background-repeat: no-repeat;
+        background-size: 1.5em 1.5em;
+        padding-right: 2.5rem;
+    }
+    
+    .textarea-mobile {
+        @apply input-mobile min-h-[100px];
+    }
+    
+    /* ================================
+       RESPONSIVE GRIDS
+       ================================ */
     .grid-responsive {
         @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6;
     }
     
     .grid-responsive-2 {
-        @apply grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 lg:gap-6;
+        @apply grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 lg:gap-6;
     }
     
-    /* Responsive Cards */
+    .grid-responsive-3 {
+        @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6;
+    }
+    
+    /* ================================
+       CARDS & PANELS
+       ================================ */
     .card-mobile {
-        @apply bg-white rounded-lg shadow-sm p-4 sm:p-6;
+        @apply bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-200 overflow-hidden;
     }
     
-    /* Responsive Spacing */
-    .section-spacing {
-        @apply py-4 sm:py-6 lg:py-8;
+    .card-mobile-padding {
+        @apply p-4 sm:p-6;
     }
     
-    .container-mobile {
-        @apply px-3 sm:px-4 lg:px-6 max-w-7xl mx-auto;
+    .card-mobile-header {
+        @apply px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200;
     }
-}
-
-/* Scrollbar Styling */
-@layer utilities {
+    
+    /* ================================
+       RESPONSIVE TEXT
+       ================================ */
+    .text-responsive-xs {
+        @apply text-xs sm:text-sm;
+    }
+    
+    .text-responsive-sm {
+        @apply text-sm sm:text-base;
+    }
+    
+    .text-responsive-base {
+        @apply text-base sm:text-lg;
+    }
+    
+    .text-responsive-lg {
+        @apply text-lg sm:text-xl;
+    }
+    
+    .text-responsive-xl {
+        @apply text-xl sm:text-2xl;
+    }
+    
+    .text-responsive-2xl {
+        @apply text-2xl sm:text-3xl;
+    }
+    
+    /* ================================
+       SPACING UTILITIES
+       ================================ */
+    .spacing-mobile-xs {
+        @apply space-y-2 sm:space-y-3;
+    }
+    
+    .spacing-mobile-sm {
+        @apply space-y-3 sm:space-y-4;
+    }
+    
+    .spacing-mobile-md {
+        @apply space-y-4 sm:space-y-6;
+    }
+    
+    .spacing-mobile-lg {
+        @apply space-y-6 sm:space-y-8;
+    }
+    
+    /* ================================
+       FLEXBOX UTILITIES
+       ================================ */
+    .flex-mobile-col {
+        @apply flex flex-col sm:flex-row gap-3 sm:gap-4;
+    }
+    
+    .flex-mobile-col-reverse {
+        @apply flex flex-col-reverse sm:flex-row gap-3 sm:gap-4;
+    }
+    
+    /* ================================
+       MODAL & OVERLAY
+       ================================ */
+    .modal-mobile {
+        @apply fixed inset-0 z-50 overflow-y-auto p-3 sm:p-4;
+    }
+    
+    .modal-content-mobile {
+        @apply bg-white rounded-xl sm:rounded-2xl max-w-full sm:max-w-lg mx-auto my-4 sm:my-8;
+    }
+    
+    /* ================================
+       NAVIGATION
+       ================================ */
+    .nav-mobile {
+        @apply flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4;
+    }
+    
+    .nav-item-mobile {
+        @apply px-4 py-3 sm:py-2 text-base sm:text-sm font-medium rounded-lg;
+        @apply transition-colors duration-200;
+    }
+    
+    /* ================================
+       SCROLLBAR STYLING
+       ================================ */
+    .scrollbar-thin {
+        scrollbar-width: thin;
+        scrollbar-color: rgb(203 213 225) transparent;
+    }
+    
     .scrollbar-thin::-webkit-scrollbar {
         width: 6px;
         height: 6px;
@@ -79,11 +250,12 @@
     }
     
     .scrollbar-thin::-webkit-scrollbar-thumb {
-        @apply bg-gray-300 rounded-full;
+        background-color: rgb(203 213 225);
+        border-radius: 3px;
     }
     
     .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-        @apply bg-gray-400;
+        background-color: rgb(148 163 184);
     }
 }
 

@@ -1,13 +1,11 @@
 <div class="fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-white min-h-screen transition-all duration-300 ease-in-out shadow-2xl transform lg:translate-x-0 lg:static lg:inset-0"
      :class="{ '-translate-x-full': !sidebarOpen, 'translate-x-0': sidebarOpen }"
-     x-data="{ academicOpen: true, recordsOpen: true }">
+     x-data="{ academicOpen: true, recordsOpen: true, cmsOpen: true }">
     <!-- Logo/Brand -->
     <div class="flex items-center justify-between px-4 sm:px-6 h-16 lg:h-20 bg-slate-950/50 backdrop-blur-sm border-b border-slate-800/50">
         <div class="flex items-center space-x-3">
-            <div class="w-9 h-9 lg:w-10 lg:h-10 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
-                <svg class="w-5 h-5 lg:w-6 lg:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                </svg>
+            <div class="w-9 h-9 lg:w-10 lg:h-10 bg-white rounded-xl flex items-center justify-center shadow-lg p-1.5">
+                <img src="{{ asset('images/school_logo.png') }}" alt="CLSS Logo" class="w-full h-full object-contain">
             </div>
             <div class="hidden sm:block">
                 <h1 class="text-sm lg:text-base font-bold text-white leading-tight">{{ config('app.name') }}</h1>
@@ -95,6 +93,14 @@
                     </div>
                     <span class="ml-3 font-medium text-sm">My Streams</span>
                 </a>
+                <a href="{{ route('timetables.index') }}" class="group flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 {{ request()->routeIs('timetables*') ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30' : 'text-slate-300 hover:bg-slate-800/50 hover:text-white' }}">
+                    <div class="flex items-center justify-center w-9 h-9 rounded-lg {{ request()->routeIs('timetables*') ? 'bg-white/10' : 'bg-slate-800/50 group-hover:bg-slate-700/50' }} transition-all duration-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <span class="ml-3 font-medium text-sm">My Timetable</span>
+                </a>
             @endif
             
             <!-- Attendance -->
@@ -131,6 +137,53 @@
         @endif
 
         @if(auth()->user()->hasRole('admin'))
+            <!-- CMS Section -->
+            <div class="pt-6 pb-2">
+                <button @click="cmsOpen = !cmsOpen" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-400 hover:text-slate-300 transition-colors duration-200 uppercase tracking-wider">
+                    <div class="flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                        <span>Website CMS</span>
+                    </div>
+                    <svg class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': cmsOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div x-show="cmsOpen" x-collapse class="space-y-1">
+                <a href="{{ route('admin.cms.pages.index') }}" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.cms.pages*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600' }}">
+                    <div class="w-1.5 h-1.5 rounded-full {{ request()->routeIs('admin.cms.pages*') ? 'bg-blue-500' : 'bg-slate-600 group-hover:bg-slate-500' }} ml-5 mr-3 transition-colors duration-200"></div>
+                    <span class="font-medium text-sm">Pages</span>
+                </a>
+                
+                <a href="{{ route('admin.cms.posts.index') }}" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.cms.posts*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600' }}">
+                    <div class="w-1.5 h-1.5 rounded-full {{ request()->routeIs('admin.cms.posts*') ? 'bg-blue-500' : 'bg-slate-600 group-hover:bg-slate-500' }} ml-5 mr-3 transition-colors duration-200"></div>
+                    <span class="font-medium text-sm">Blog Posts</span>
+                </a>
+                
+                <a href="{{ route('admin.cms.events.index') }}" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.cms.events*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600' }}">
+                    <div class="w-1.5 h-1.5 rounded-full {{ request()->routeIs('admin.cms.events*') ? 'bg-blue-500' : 'bg-slate-600 group-hover:bg-slate-500' }} ml-5 mr-3 transition-colors duration-200"></div>
+                    <span class="font-medium text-sm">Events</span>
+                </a>
+                
+                <a href="{{ route('admin.cms.media.index') }}" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.cms.media*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600' }}">
+                    <div class="w-1.5 h-1.5 rounded-full {{ request()->routeIs('admin.cms.media*') ? 'bg-blue-500' : 'bg-slate-600 group-hover:bg-slate-500' }} ml-5 mr-3 transition-colors duration-200"></div>
+                    <span class="font-medium text-sm">Media Library</span>
+                </a>
+                
+                <a href="{{ route('admin.cms.menus.index') }}" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.cms.menus*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600' }}">
+                    <div class="w-1.5 h-1.5 rounded-full {{ request()->routeIs('admin.cms.menus*') ? 'bg-blue-500' : 'bg-slate-600 group-hover:bg-slate-500' }} ml-5 mr-3 transition-colors duration-200"></div>
+                    <span class="font-medium text-sm">Menus</span>
+                </a>
+                
+                <a href="{{ route('admin.cms.settings.index') }}" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 {{ request()->routeIs('admin.cms.settings*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600' }}">
+                    <div class="w-1.5 h-1.5 rounded-full {{ request()->routeIs('admin.cms.settings*') ? 'bg-blue-500' : 'bg-slate-600 group-hover:bg-slate-500' }} ml-5 mr-3 transition-colors duration-200"></div>
+                    <span class="font-medium text-sm">CMS Settings</span>
+                </a>
+            </div>
+
             <!-- Academic Section -->
             <div class="pt-6 pb-2">
                 <button @click="academicOpen = !academicOpen" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-400 hover:text-slate-300 transition-colors duration-200 uppercase tracking-wider">
@@ -160,6 +213,16 @@
                 <a href="{{ route('subjects.index') }}" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 {{ request()->routeIs('subjects*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600' }}">
                     <div class="w-1.5 h-1.5 rounded-full {{ request()->routeIs('subjects*') ? 'bg-blue-500' : 'bg-slate-600 group-hover:bg-slate-500' }} ml-5 mr-3 transition-colors duration-200"></div>
                     <span class="font-medium text-sm">Subjects</span>
+                </a>
+                
+                <a href="{{ route('timetables.index') }}" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 {{ request()->routeIs('timetables*') || request()->routeIs('timetable-periods*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600' }}">
+                    <div class="w-1.5 h-1.5 rounded-full {{ request()->routeIs('timetables*') || request()->routeIs('timetable-periods*') ? 'bg-blue-500' : 'bg-slate-600 group-hover:bg-slate-500' }} ml-5 mr-3 transition-colors duration-200"></div>
+                    <span class="font-medium text-sm">Timetable</span>
+                </a>
+                
+                <a href="{{ route('classes.index') }}" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 {{ request()->routeIs('classes*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600' }}">
+                    <div class="w-1.5 h-1.5 rounded-full {{ request()->routeIs('classes*') ? 'bg-blue-500' : 'bg-slate-600 group-hover:bg-slate-500' }} ml-5 mr-3 transition-colors duration-200"></div>
+                    <span class="font-medium text-sm">Classes & Streams</span>
                 </a>
                 
                 <a href="{{ route('exams.index') }}" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 {{ request()->routeIs('exams*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600' }}">

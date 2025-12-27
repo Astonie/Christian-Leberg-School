@@ -18,6 +18,7 @@ return new class extends Migration
             $table->boolean('is_group')->default(false); // allow nested groups
             $table->foreignId('parent_id')->nullable()->constrained('assessment_components')->onDelete('cascade');
             $table->decimal('max_score', 8, 2)->default(100); // max points for component
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }

@@ -13,8 +13,24 @@
 
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    
+    <style>
+        /* Custom scrollbar for webkit browsers */
+        .scrollbar-thin::-webkit-scrollbar { height: 8px; }
+        .scrollbar-thin::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Improve touch targets on mobile */
+        @media (max-width: 640px) {
+            button, a, input[type="submit"], input[type="button"] {
+                min-height: 44px;
+                min-width: 44px;
+            }
+        }
+    </style>
 </head>
-<body class="font-sans antialiased bg-gray-100">
+<body class="font-sans antialiased bg-gray-100 overflow-x-hidden">
     <div class="min-h-screen">
         @include('layouts.navigation')
 

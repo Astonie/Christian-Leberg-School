@@ -333,7 +333,7 @@
                                                 <div class="flex items-center justify-between mb-3">
                                                     <div>
                                                         <h4 class="font-semibold text-gray-900">{{ $exam->name }}</h4>
-                                                        <span class="text-xs text-gray-500">{{ $exam->term }}</span>
+                                                        <span class="text-xs text-gray-500">{{ $exam->term->name }}</span>
                                                     </div>
                                                     <div class="flex items-center space-x-3">
                                                         <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-800">

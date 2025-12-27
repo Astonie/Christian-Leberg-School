@@ -18,6 +18,11 @@
                     <x-nav-link :href="route('attendance.index')" :active="request()->routeIs('attendance.*')">
                         {{ __('Attendance') }}
                     </x-nav-link>
+                    @if(Auth::user()->hasRole('admin'))
+                        <x-nav-link :href="route('timetables.index')" :active="request()->routeIs('timetables.*') || request()->routeIs('timetable-periods.*')">
+                            {{ __('Timetable') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
@@ -87,6 +92,17 @@
             <x-responsive-nav-link :href="route('attendance.index')" :active="request()->routeIs('attendance.*')">
                 {{ __('Attendance') }}
             </x-responsive-nav-link>
+            @if(Auth::user()->hasRole('admin'))
+                <x-responsive-nav-link :href="route('timetables.index')" :active="request()->routeIs('timetables.*') || request()->routeIs('timetable-periods.*')">
+                    {{ __('Timetable') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                    {{ __('Users') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('guardians.index')" :active="request()->routeIs('guardians.*')">
+                    {{ __('Guardians') }}
+                </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->

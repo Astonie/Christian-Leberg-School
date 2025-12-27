@@ -14,7 +14,7 @@ class AssessmentStructureController extends Controller
             return view('admin.assessment_structures.index', ['structures' => collect()])->with('warning', 'Assessment structures table not present. Run migrations to enable this feature.');
         }
 
-        $structures = AssessmentStructure::with('gradingSystem')->orderBy('name')->get();
+        $structures = AssessmentStructure::with(['gradingSystem', 'subject', 'components'])->orderBy('name')->get();
         return view('admin.assessment_structures.index', compact('structures'));
     }
 }

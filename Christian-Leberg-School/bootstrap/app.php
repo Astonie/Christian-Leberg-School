@@ -35,18 +35,26 @@ return Application::configure(basePath: dirname(__DIR__))
             \Log::error('Database Query Error', [
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
-                'url' => $request->fullUrl()
+                'sql' => $e->getSql() ?? 'N/A',
+                'bindings' => $e->getBindings() ?? [],
+                'url' => $request->fullUrl(),
+                'trace' => $e->getTraceAsString()
             ]);
+            
+            // Show detailed error in development, generic in production
+            $errorMessage = config('app.debug') 
+                ? 'Database Error: ' . $e->getMessage()
+                : 'A database error occurred. Please try again or contact support if the problem persists.';
             
             if ($request->expectsJson()) {
                 return response()->json([
-                    'message' => 'A database error occurred.',
+                    'message' => $errorMessage,
                     'error' => 'Database error'
                 ], 500);
             }
             
             return back()
                 ->withInput()
-                ->with('error', 'A database error occurred. Please try again or contact support if the problem persists.');
+                ->with('error', $errorMessage);
         });
     })->create();

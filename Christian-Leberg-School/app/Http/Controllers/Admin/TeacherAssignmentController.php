@@ -30,16 +30,24 @@ class TeacherAssignmentController extends Controller
     {
         $year = AcademicYear::active()->first();
 
+        if (!$year) {
+            return back()->with('error', 'No active academic year found.');
+        }
+
         $data = $request->validate([
             'assignments' => ['nullable', 'array'], // assignments[stream_id] = subject_id
             'class_teacher' => ['nullable', 'array'], // class_teacher[stream_id] = 1
         ]);
 
-        $streams = Stream::where('academic_year_id', $year?->id)->pluck('id')->all();
+        $streams = Stream::where('academic_year_id', $year->id)->pluck('id')->all();
 
-        DB::transaction(function () use ($teacher, $data, $streams) {
-            // Remove existing assignments for teacher in these streams
-            DB::table('stream_teacher')->where('teacher_id', $teacher->id)->whereIn('stream_id', $streams)->delete();
+        DB::transaction(function () use ($teacher, $data, $streams, $year) {
+            // Remove existing assignments for teacher in these streams for this academic year
+            DB::table('stream_teacher')
+                ->where('teacher_id', $teacher->id)
+                ->whereIn('stream_id', $streams)
+                ->where('academic_year_id', $year->id)
+                ->delete();
 
             $assignments = $data['assignments'] ?? [];
             $classTeachers = $data['class_teacher'] ?? [];
@@ -51,6 +59,7 @@ class TeacherAssignmentController extends Controller
                     'teacher_id' => $teacher->id,
                     'subject_id' => $subjectId,
                     'is_class_teacher' => isset($classTeachers[$streamId]) && $classTeachers[$streamId] ? true : false,
+                    'academic_year_id' => $year->id,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);

@@ -49,7 +49,7 @@
                             <label for="class" class="block text-sm font-medium text-gray-700 mb-1">Class</label>
                             <select id="class" name="class" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                                 <option value="">All Classes</option>
-                                @foreach(\App\Models\SchoolClass::all() as $class)
+                                @foreach($availableClasses as $class)
                                     <option value="{{ $class->id }}" {{ request('class') == $class->id ? 'selected' : '' }}>{{ $class->name }}</option>
                                 @endforeach
                             </select>
@@ -116,11 +116,11 @@
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-gray-600">Total Students</p>
-                            <p class="text-3xl font-bold text-gray-900 mt-1">{{ \App\Models\Student::count() }}</p>
+                            <p class="text-sm font-medium text-gray-600">{{ auth()->user()->hasRole('teacher') ? 'My Students' : 'Total Students' }}</p>
+                            <p class="text-3xl font-bold text-gray-900 mt-1">{{ $stats['total'] }}</p>
                         </div>
-                        <div class="bg-gray-100 rounded-full p-3">
-                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="bg-blue-100 rounded-full p-3">
+                            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
                             </svg>
                         </div>
@@ -131,10 +131,10 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-600">Active</p>
-                            <p class="text-3xl font-bold text-gray-900 mt-1">{{ \App\Models\Student::where('status', 'active')->count() }}</p>
+                            <p class="text-3xl font-bold text-green-600 mt-1">{{ $stats['active'] }}</p>
                         </div>
-                        <div class="bg-gray-100 rounded-full p-3">
-                            <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="bg-green-100 rounded-full p-3">
+                            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                         </div>
@@ -145,10 +145,10 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-600">Male</p>
-                            <p class="text-3xl font-bold text-gray-900 mt-1">{{ \App\Models\Student::where('gender', 'male')->count() }}</p>
+                            <p class="text-3xl font-bold text-indigo-600 mt-1">{{ $stats['male'] }}</p>
                         </div>
-                        <div class="bg-gray-100 rounded-full p-3">
-                            <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="bg-indigo-100 rounded-full p-3">
+                            <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                             </svg>
                         </div>
@@ -159,10 +159,10 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-600">Female</p>
-                            <p class="text-3xl font-bold text-gray-900 mt-1">{{ \App\Models\Student::where('gender', 'female')->count() }}</p>
+                            <p class="text-3xl font-bold text-pink-600 mt-1">{{ $stats['female'] }}</p>
                         </div>
-                        <div class="bg-gray-100 rounded-full p-3">
-                            <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="bg-pink-100 rounded-full p-3">
+                            <svg class="w-8 h-8 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                             </svg>
                         </div>

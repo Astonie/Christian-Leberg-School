@@ -38,7 +38,7 @@
                                         <div class="flex flex-wrap gap-2 mt-2">
                                             @php
                                                 $subjects = $teacher->subjects()->wherePivot('academic_year_id', $activeYear->id)->count();
-                                                $streams = $teacher->streams()->where('academic_year_id', $activeYear->id)->count();
+                                                $streams = $teacher->streams()->wherePivot('academic_year_id', $activeYear->id)->count();
                                             @endphp
                                             <span class="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold">
                                                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

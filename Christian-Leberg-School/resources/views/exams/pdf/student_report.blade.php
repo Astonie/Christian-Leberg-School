@@ -275,7 +275,7 @@
                     <tr><td>Class:</td><td>{{ $class?->name ?? '-' }}{{ $stream?->name ? ' - '.$stream->name : '' }}</td></tr>
                     <tr><td>Exam:</td><td>{{ $exam->name }}</td></tr>
                     <tr><td>Academic Year:</td><td>{{ $exam->academicYear?->name ?? '-' }}</td></tr>
-                    <tr><td>Term:</td><td>{{ $exam->term }}</td></tr>
+                    <tr><td>Term:</td><td>{{ $exam->term->name }}</td></tr>
                     <tr><td>Report Date:</td><td>{{ now()->format('d M Y') }}</td></tr>
                 </table>
             </td>

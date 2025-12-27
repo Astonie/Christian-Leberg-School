@@ -24,7 +24,57 @@ class StudentController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $query = Student::with(['user', 'activeStreams.schoolClass']);
+        $query = Student::with(['user', 'streams.schoolClass']);
+        $baseQuery = Student::query(); // For stats calculation
+        $teacherStreamIds = [];
+        $availableClasses = SchoolClass::all();
+
+        // If a teacher is viewing, limit to students in the teacher's assigned streams for the active academic year
+        if ($user->hasRole('teacher')) {
+            $teacher = $user->teacher;
+            $year = AcademicYear::active()->first();
+            if ($teacher && $year) {
+                // Get teacher's stream IDs
+                $teacherStreamIds = $teacher->streams()->where('stream_teacher.academic_year_id', $year->id)->pluck('streams.id')->all();
+                
+                if (!empty($teacherStreamIds)) {
+                    // Apply filter to main query
+                    $query->whereHas('streams', function ($q) use ($teacherStreamIds, $year) {
+                        $q->whereIn('streams.id', $teacherStreamIds)
+                          ->where('student_stream.academic_year_id', $year->id)
+                          ->where('student_stream.is_active', true);
+                    })
+                    // Eager load only the relevant streams for this teacher and year
+                    ->with(['streams' => function($q) use ($teacherStreamIds, $year) {
+                        $q->whereIn('streams.id', $teacherStreamIds)
+                          ->where('student_stream.academic_year_id', $year->id)
+                          ->where('student_stream.is_active', true);
+                    }]);
+                    
+                    // Apply same filter to base query for stats
+                    $baseQuery->whereHas('streams', function ($q) use ($teacherStreamIds, $year) {
+                        $q->whereIn('streams.id', $teacherStreamIds)
+                          ->where('student_stream.academic_year_id', $year->id)
+                          ->where('student_stream.is_active', true);
+                    });
+                    
+                    // Get only classes that the teacher teaches
+                    $availableClasses = SchoolClass::whereHas('streams', function($q) use ($teacherStreamIds) {
+                        $q->whereIn('streams.id', $teacherStreamIds);
+                    })->get();
+                } else {
+                    // No stream assignment -> return empty
+                    $query->whereRaw('1 = 0');
+                    $baseQuery->whereRaw('1 = 0');
+                    $availableClasses = collect();
+                }
+            } else {
+                // No teacher profile or no active year -> return empty
+                $query->whereRaw('1 = 0');
+                $baseQuery->whereRaw('1 = 0');
+                $availableClasses = collect();
+            }
+        }
 
         // Search functionality
         if ($request->filled('search')) {
@@ -55,31 +105,24 @@ class StudentController extends Controller
             $query->where('gender', $request->gender);
         }
 
-        // If a teacher is viewing, limit to students in the teacher's assigned streams for the active academic year
-        if ($user->hasRole('teacher')) {
-            $teacher = $user->teacher;
-            $year = AcademicYear::active()->first();
-            if ($teacher && $year) {
-                // stream_teacher pivot doesn't have academic_year_id, filter by streams table
-                $streamIds = $teacher->streams()->where('academic_year_id', $year->id)->pluck('streams.id')->all();
-                $query->whereHas('streams', function ($q) use ($streamIds, $year) {
-                    $q->whereIn('streams.id', $streamIds)->where('student_stream.academic_year_id', $year->id)->where('student_stream.is_active', true);
-                });
-            } else {
-                // No active year or no assignment -> return empty
-                $query->whereRaw('1 = 0');
-            }
-        }
-
         // Export functionality
         if ($request->filled('export')) {
             return $this->export($request, $query);
         }
 
+        // Calculate stats based on role
+        $stats = [
+            'total' => $baseQuery->count(),
+            'active' => (clone $baseQuery)->where('status', 'active')->count(),
+            'male' => (clone $baseQuery)->where('gender', 'male')->count(),
+            'female' => (clone $baseQuery)->where('gender', 'female')->count(),
+        ];
+
         $students = $query->latest()->paginate(15);
         $exams = Exam::latest()->get();
         $selectedExam = $request->query('exam') ? Exam::find($request->query('exam')) : Exam::latest()->first();
-        return view('students.index', compact('students', 'exams', 'selectedExam'));
+        
+        return view('students.index', compact('students', 'exams', 'selectedExam', 'stats', 'availableClasses'));
     }
 
     /**
@@ -183,7 +226,7 @@ class StudentController extends Controller
         if ($user->hasRole('teacher')) {
             $teacher = $user->teacher;
             $year = AcademicYear::active()->first();
-            $inStream = $student->streams()->wherePivot('academic_year_id', $year?->id)->where('student_stream.is_active', true)->whereIn('streams.id', $teacher->streams()->where('academic_year_id', $year?->id)->pluck('streams.id')->all())->exists();
+            $inStream = $student->streams()->wherePivot('academic_year_id', $year?->id)->where('student_stream.is_active', true)->whereIn('streams.id', $teacher->streams()->where('stream_teacher.academic_year_id', $year?->id)->pluck('streams.id')->all())->exists();
             if (! $inStream) {
                 abort(403);
             }

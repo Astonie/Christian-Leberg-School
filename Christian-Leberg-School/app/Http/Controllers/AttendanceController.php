@@ -30,7 +30,7 @@ class AttendanceController extends Controller
                 $subjects = collect();
             } else {
                 $streams = $teacher->streams()
-                    ->where('academic_year_id', $activeYear->id)
+                    ->where('streams.academic_year_id', $activeYear->id)
                     ->with('schoolClass')
                     ->get();
                     
@@ -72,7 +72,7 @@ class AttendanceController extends Controller
             
             $isAssigned = $teacher->streams()
                 ->where('streams.id', $stream->id)
-                ->where('academic_year_id', $activeYear->id)
+                ->where('stream_teacher.academic_year_id', $activeYear->id)
                 ->exists();
             
             if (!$isAssigned) {
@@ -122,7 +122,7 @@ class AttendanceController extends Controller
             
             $isAssigned = $teacher->streams()
                 ->where('streams.id', $streamId)
-                ->where('academic_year_id', $activeYear->id)
+                ->where('stream_teacher.academic_year_id', $activeYear->id)
                 ->exists();
             
             if (!$isAssigned) {
@@ -250,7 +250,7 @@ class AttendanceController extends Controller
             } else {
                 // Filter by teacher's streams and subjects
                 $teacherStreamIds = $teacher->streams()
-                    ->where('academic_year_id', $activeYear->id)
+                    ->where('stream_teacher.academic_year_id', $activeYear->id)
                     ->pluck('streams.id')->toArray();
                 
                 $teacherSubjectIds = $teacher->subjects()
@@ -264,7 +264,7 @@ class AttendanceController extends Controller
                 }
                 
                 $streams = $teacher->streams()
-                    ->where('academic_year_id', $activeYear->id)
+                    ->where('streams.academic_year_id', $activeYear->id)
                     ->with('schoolClass')
                     ->get();
                     

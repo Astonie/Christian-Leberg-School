@@ -145,7 +145,39 @@ class UserSeeder extends Seeder
             $studentRole = Role::where('slug', 'student')->first();
             $streams = Stream::with('schoolClass')->get();
 
-            for ($i = 1; $i <= 20; $i++) {
+            // First student: Wanangwa Gumbo (specific test student)
+            $user = User::firstOrCreate(
+                ['email' => 'wanangwa.gumbo@school.com'],
+                [
+                    'name' => 'Wanangwa Gumbo',
+                    'password' => $password,
+                    'role_id' => $studentRole->id,
+                ]
+            );
+
+            if (!$user->student && $streams->count() > 0) {
+                $stream = $streams->random();
+                
+                $student = Student::create([
+                    'user_id' => $user->id,
+                    'admission_number' => 'ADM0001',
+                    'admission_date' => Carbon::now()->subYears(2),
+                    'date_of_birth' => Carbon::now()->subYears(10),
+                    'gender' => 'male',
+                ]);
+
+                $term = Term::where('academic_year_id', $stream->academic_year_id)->inRandomOrder()->first();
+
+                $student->streams()->attach($stream->id, [
+                    'academic_year_id' => $stream->academic_year_id,
+                    'term_id' => $term ? $term->id : null,
+                    'enrollment_date' => Carbon::now()->subMonths(6),
+                    'is_active' => true,
+                ]);
+            }
+
+            // Create remaining 19 students
+            for ($i = 2; $i <= 20; $i++) {
                 $user = User::firstOrCreate(
                     ['email' => "student$i@school.com"],
                     [

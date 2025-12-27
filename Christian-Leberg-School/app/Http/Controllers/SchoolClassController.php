@@ -57,7 +57,7 @@ class SchoolClassController extends Controller
                 abort(403);
             }
 
-            $teachesInClass = $teacher->streams()->where('academic_year_id', $activeYear->id)->where('class_id', $schoolClass->id)->exists();
+            $teachesInClass = $teacher->streams()->where('stream_teacher.academic_year_id', $activeYear->id)->where('class_id', $schoolClass->id)->exists();
             Log::info('SchoolClassController@show teacher->streams check', ['teachesInClass' => $teachesInClass]);
             if (! $teachesInClass) {
                 Log::warning('Teacher not assigned to any stream in this class', ['teacher_id' => $teacher->id, 'class_id' => $schoolClass->id, 'year' => $activeYear->id]);
@@ -134,14 +134,14 @@ class SchoolClassController extends Controller
             abort(403);
         }
 
-        $teachesInClass = $teacher->streams()->where('academic_year_id', $activeYear->id)->where('class_id', $schoolClass->id)->exists();
+        $teachesInClass = $teacher->streams()->where('stream_teacher.academic_year_id', $activeYear->id)->where('class_id', $schoolClass->id)->exists();
         if (! $teachesInClass) {
             abort(403);
         }
 
         $schoolClass->load(['streams.academicYear']); 
         if ($activeYear) {
-            $schoolClass->setRelation('streams', $schoolClass->streams()->where('academic_year_id', $activeYear->id)->get());
+            $schoolClass->setRelation('streams', $schoolClass->streams()->where('streams.academic_year_id', $activeYear->id)->get());
         } else {
             $schoolClass->setRelation('streams', collect());
         }

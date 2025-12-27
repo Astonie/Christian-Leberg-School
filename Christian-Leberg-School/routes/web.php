@@ -3,11 +3,17 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\WebsiteController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Public Website Routes
+Route::get('/', [WebsiteController::class, 'home'])->name('website.home');
+Route::get('/page/{slug}', [WebsiteController::class, 'page'])->name('website.page');
+Route::get('/blog', [WebsiteController::class, 'blog'])->name('website.blog');
+Route::get('/blog/{slug}', [WebsiteController::class, 'blogPost'])->name('website.blog.show');
+Route::get('/events', [WebsiteController::class, 'events'])->name('website.events');
+Route::get('/events/{slug}', [WebsiteController::class, 'event'])->name('website.events.show');
+Route::get('/search', [WebsiteController::class, 'search'])->name('website.search');
 
 // Authentication routes (Laravel's auth scaffolding)
 require __DIR__.'/auth.php';
@@ -25,13 +31,59 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [DashboardController::class, 'admin']);
     });
 
+    // CMS Admin Routes
+    Route::middleware('role:admin')->prefix('admin/cms')->name('admin.cms.')->group(function () {
+        // Pages
+        Route::resource('pages', \App\Http\Controllers\Admin\PageController::class);
+        
+        // Posts
+        Route::resource('posts', \App\Http\Controllers\Admin\PostController::class);
+        
+        // Events
+        Route::resource('events', \App\Http\Controllers\Admin\EventController::class);
+        
+        // Media
+        Route::resource('media', \App\Http\Controllers\Admin\MediaController::class);
+        
+        // Menus
+        Route::resource('menus', \App\Http\Controllers\Admin\MenuController::class);
+        Route::post('menus/{menu}/items', [\App\Http\Controllers\Admin\MenuController::class, 'addItem'])->name('menus.items.store');
+        Route::put('menus/{menu}/items/{item}', [\App\Http\Controllers\Admin\MenuController::class, 'updateItem'])->name('menus.items.update');
+        Route::delete('menus/{menu}/items/{item}', [\App\Http\Controllers\Admin\MenuController::class, 'deleteItem'])->name('menus.items.destroy');
+        Route::post('menus/{menu}/reorder', [\App\Http\Controllers\Admin\MenuController::class, 'reorderItems'])->name('menus.items.reorder');
+        
+        // Settings
+        Route::get('settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
+        Route::post('settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
+    });
+
         // Exams (Admin)
         Route::middleware('role:admin')->group(function () {
             Route::resource('exams', \App\Http\Controllers\ExamController::class)->except(['show']);
+            Route::post('exams/{id}/restore', [\App\Http\Controllers\ExamController::class, 'restore'])->name('exams.restore');
             Route::get('exams/{exam}/report', [\App\Http\Controllers\ExamController::class, 'report'])->name('exams.report');
+            Route::get('exams/{exam}/component-breakdown', [\App\Http\Controllers\ExamController::class, 'componentBreakdown'])->name('exams.component_breakdown');
             Route::get('exams/{exam}/classes/{class}/report', [\App\Http\Controllers\ExamController::class, 'classReport'])->name('exams.class.report');
             Route::get('exams/{exam}/classes/{class}/report/pdf', [\App\Http\Controllers\ExamController::class, 'classReportPdf'])->name('exams.report.pdf');
+            
+            // Result access control
+            Route::post('exams/{exam}/release-results', [\App\Http\Controllers\ExamController::class, 'releaseResults'])->name('exams.release_results');
+            Route::post('exams/{exam}/withdraw-results', [\App\Http\Controllers\ExamController::class, 'withdrawResults'])->name('exams.withdraw_results');
+            Route::post('exams/{exam}/manage-student-access', [\App\Http\Controllers\ExamController::class, 'manageStudentAccess'])->name('exams.manage_student_access');
+            
+            // Assessment Structures (Admin only)
+            Route::resource('assessment-structures', \App\Http\Controllers\AssessmentStructureController::class);
+            
+            // Timetable management (Admin only - create/edit/delete)
+            Route::resource('timetable-periods', \App\Http\Controllers\TimetablePeriodController::class);
+            Route::resource('timetables', \App\Http\Controllers\TimetableController::class)->except(['index']);
+            Route::post('timetables/bulk', [\App\Http\Controllers\TimetableController::class, 'bulkStore'])->name('timetables.bulk_store');
         });
+
+    // Timetable viewing (Admin and Teachers)
+    Route::middleware('role:admin|teacher')->group(function () {
+        Route::get('timetables', [\App\Http\Controllers\TimetableController::class, 'index'])->name('timetables.index');
+    });
 
     // Exams show - Accessible by Admin and Teachers
     Route::middleware('role:admin|teacher')->group(function () {
@@ -47,6 +99,12 @@ Route::middleware(['auth'])->group(function () {
 
     // Allow authorized users (admin/teacher/student owner) to update individual exam results via controller checks
     Route::put('exam-results/{examResult}', [\App\Http\Controllers\ExamResultController::class, 'update'])->name('exam-results.update');
+
+    // Component-based Scores Entry
+    Route::middleware('role:admin|teacher')->group(function () {
+        Route::get('student-scores/create', [\App\Http\Controllers\StudentScoreController::class, 'create'])->name('student-scores.create');
+        Route::post('student-scores', [\App\Http\Controllers\StudentScoreController::class, 'store'])->name('student-scores.store');
+    });
 
     // Exam Results Grid Entry (Simplified marks entry interface)
     Route::middleware('role:admin|teacher')->group(function () {
@@ -109,6 +167,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [DashboardController::class, 'student']);
     });
 
+    // Guardian Routes
+    Route::middleware('role:guardian')->prefix('guardian')->name('dashboard.guardian')->group(function () {
+        Route::get('/', [DashboardController::class, 'guardian']);
+    });
+
     // Student Management: admin-only resources (create/update/delete), teachers can view
     Route::middleware('role:admin')->group(function () {
         Route::resource('users', \App\Http\Controllers\UserController::class)->except(['show', 'create', 'store']); 
@@ -120,11 +183,12 @@ Route::middleware(['auth'])->group(function () {
         
         // Student Bulk Import Routes (Admin only)
         Route::get('students/import', [\App\Http\Controllers\StudentImportController::class, 'index'])->name('students.import.index');
-        Route::post('students/import/preview', [\App\Http\Controllers\StudentImportController::class, 'preview'])->name('students.import.preview');
+        Route::match(['get', 'post'], 'students/import/preview', [\App\Http\Controllers\StudentImportController::class, 'preview'])->name('students.import.preview');
         Route::post('students/import/process', [\App\Http\Controllers\StudentImportController::class, 'import'])->name('students.import.process');
         Route::get('students/import/template', [\App\Http\Controllers\StudentImportController::class, 'downloadTemplate'])->name('students.import.template');
         
         Route::resource('academic-years', \App\Http\Controllers\AcademicYearController::class);
+        Route::resource('terms', \App\Http\Controllers\TermController::class)->only(['store', 'update', 'destroy']);
         Route::resource('classes', \App\Http\Controllers\SchoolClassController::class)->except(['show']);
         Route::resource('streams', \App\Http\Controllers\StreamController::class)->only(['store', 'update', 'destroy']);
         Route::resource('subjects', \App\Http\Controllers\SubjectController::class);
@@ -195,6 +259,17 @@ Route::middleware(['auth'])->group(function () {
     // Guardian Attendance Reports
     Route::middleware('role:guardian')->group(function () {
         Route::get('attendance/guardian-report/{student?}', [\App\Http\Controllers\AttendanceController::class, 'guardianReport'])->name('attendance.guardian-report');
+        Route::get('guardian/student/{student}/attendance', [\App\Http\Controllers\GuardianController::class, 'studentAttendance'])->name('guardian.student.attendance');
+        Route::get('guardian/student/{student}/results', [\App\Http\Controllers\GuardianController::class, 'studentResults'])->name('guardian.student.results');
+        Route::get('guardian/student/{student}/performance', [\App\Http\Controllers\GuardianController::class, 'studentPerformance'])->name('guardian.student.performance');
+        
+        // Guardian Communication
+        Route::get('guardian/contact', [\App\Http\Controllers\GuardianController::class, 'contact'])->name('guardian.contact');
+        Route::post('guardian/contact', [\App\Http\Controllers\GuardianController::class, 'contactSubmit'])->name('guardian.contact.submit');
+        
+        // Guardian Report Card Access
+        Route::get('guardian/student/{student}/exam/{exam}/report-card', [\App\Http\Controllers\GuardianController::class, 'studentReportCard'])->name('guardian.student.report_card');
+        Route::get('guardian/student/{student}/exam/{exam}/report-card/pdf', [\App\Http\Controllers\GuardianController::class, 'studentReportCardPdf'])->name('guardian.student.report_card.pdf');
     });
 
 });

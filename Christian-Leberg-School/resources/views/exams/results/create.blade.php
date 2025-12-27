@@ -43,7 +43,9 @@
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div class="flex-1">
                         <label for="class_id" class="block text-sm font-medium text-gray-700 mb-2">Filter Students by Class</label>
-                        <select id="class_id" name="class_id" onchange="if(this.value){ window.location='?class_id='+this.value } else { window.location='{{ route('exams.results.create', $exam) }}' }" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-transparent">
+                        <select id="class_id" name="class_id" 
+                                onchange="var url = new URL(window.location); url.searchParams.set('class_id', this.value); if(this.value === '') url.searchParams.delete('class_id'); window.location = url.toString();" 
+                                class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-transparent">
                             <option value="">All Classes</option>
                             @foreach($classes as $class)
                                 <option value="{{ $class->id }}" {{ (isset($classId) && $classId == $class->id) ? 'selected' : '' }}>{{ $class->name }}</option>
@@ -73,6 +75,10 @@
             <form method="POST" action="{{ route('exams.results.store', $exam) }}">
                 @csrf
                 
+                @if($selectedSubjectId)
+                    <input type="hidden" name="subject_id" value="{{ $selectedSubjectId }}">
+                @endif
+                
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="p-6 border-b border-gray-200">
                         <div class="flex items-center justify-between mb-4">
@@ -98,14 +104,53 @@
                         </div>
 
                         <div class="mb-4">
-                            <label for="subject_id" class="block text-sm font-medium text-gray-700 mb-2">Select Subject <span class="text-red-500">*</span></label>
-                            <select name="subject_id" id="subject_id" required class="w-full md:w-1/2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-transparent">
+                            <label for="subject_filter" class="block text-sm font-medium text-gray-700 mb-2">Select Subject <span class="text-red-500">*</span></label>
+                            <select id="subject_filter" 
+                                    onchange="var url = new URL(window.location); url.searchParams.set('subject_id', this.value); if(this.value === '') url.searchParams.delete('subject_id'); window.location = url.toString();" 
+                                    class="w-full md:w-1/2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-transparent">
                                 <option value="">Choose subject...</option>
                                 @foreach($subjects as $subject)
-                                    <option value="{{ $subject->id }}">{{ $subject->name }} ({{ $subject->code }})</option>
+                                    <option value="{{ $subject->id }}" {{ ($selectedSubjectId ?? '') == $subject->id ? 'selected' : '' }}>
+                                        {{ $subject->name }} ({{ $subject->code }})
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
+
+                        @if(session('conflicts'))
+                            <div class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <div class="flex items-start">
+                                    <svg class="w-6 h-6 text-yellow-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                    </svg>
+                                    <div class="flex-1">
+                                        <h4 class="text-sm font-bold text-yellow-800 mb-2">⚠️ Existing Marks Detected</h4>
+                                        <p class="text-sm text-yellow-700 mb-3">The following students already have marks entered. To change them, please edit the marks individually or confirm below to overwrite:</p>
+                                        <div class="space-y-2 mb-4">
+                                            @foreach(session('conflicts') as $conflict)
+                                                <div class="bg-white rounded p-3 text-sm">
+                                                    <span class="font-semibold text-gray-900">{{ $conflict['student_name'] }}</span>
+                                                    <span class="text-gray-600">- Current: <span class="font-bold">{{ $conflict['existing_marks'] }}%</span></span>
+                                                    <span class="text-gray-600">→ New: <span class="font-bold text-yellow-700">{{ $conflict['new_marks'] }}%</span></span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @elseif($selectedSubjectId && $existingResults->count() > 0)
+                            <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                <div class="flex items-start">
+                                    <svg class="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <div class="flex-1">
+                                        <h4 class="text-sm font-bold text-blue-800">{{ $existingResults->count() }} student(s) already have marks entered</h4>
+                                        <p class="text-sm text-blue-700 mt-1">Students with existing marks are highlighted in blue. You can edit their marks directly. Updating existing marks will replace the previous values.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
                     </div>
 
                     @if($students->isEmpty())
@@ -122,13 +167,19 @@
                                 <thead class="bg-gray-50">
                                     <tr>
                                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/2">Student</th>
+                                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Current Marks</th>
                                         <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Marks (0-100)</th>
                                         <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Grade Preview</th>
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-100">
                                     @foreach($students as $student)
-                                        <tr class="hover:bg-gray-50 transition-colors" x-data="{ marks: '', grade: '' }">
+                                        @php
+                                            $existingMark = $existingResults[$student->id] ?? null;
+                                            $hasExisting = $existingMark && $selectedSubjectId;
+                                            $currentMarks = old("results.{$loop->index}.marks", $existingMark->marks ?? '');
+                                        @endphp
+                                        <tr class="hover:bg-gray-50 transition-colors {{ $hasExisting ? 'bg-blue-50' : '' }}" x-data="{ marks: '{{ $currentMarks }}', grade: '{{ $existingMark->grade ?? '' }}' }">
                                             <td class="px-6 py-4">
                                                 <div class="flex items-center">
                                                     <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center bg-gray-100 rounded-lg">
@@ -139,22 +190,37 @@
                                                     <div class="ml-4">
                                                         <div class="text-sm font-semibold text-gray-900">{{ $student->user->name }}</div>
                                                         <div class="text-xs text-gray-500">{{ $student->admission_number }}</div>
+                                                        @if($hasExisting)
+                                                            <div class="text-xs text-blue-600 font-semibold mt-1">✓ Already graded</div>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </td>
+                                            <td class="px-6 py-4 text-center">
+                                                @if($hasExisting)
+                                                    <div class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 rounded-lg font-bold">
+                                                        {{ $existingMark->marks }}%
+                                                    </div>
+                                                @else
+                                                    <span class="text-gray-400 text-sm">—</span>
+                                                @endif
+                                            </td>
                                             <td class="px-6 py-4">
                                                 <input type="hidden" name="results[{{ $loop->index }}][student_id]" value="{{ $student->id }}">
+                                                @if(session('conflicts'))
+                                                    <input type="hidden" name="results[{{ $loop->index }}][force_update]" value="1">
+                                                @endif
                                                 <input type="number" 
                                                        name="results[{{ $loop->index }}][marks]" 
                                                        x-model="marks"
                                                        @input="grade = calculateGrade($event.target.value); updatePreview($event.target.value)"
-                                                       class="w-32 mx-auto block px-4 py-2 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-transparent" 
+                                                       value="{{ old("results.{$loop->index}.marks", $existingMark->marks ?? '') }}"
+                                                       class="w-32 mx-auto block px-4 py-2 text-center border rounded-lg focus:ring-2 focus:ring-gray-400 focus:border-transparent {{ $hasExisting ? 'border-blue-300 bg-blue-50' : 'border-gray-300' }}" 
                                                        min="0" 
                                                        max="100"
                                                        step="0.01"
-                                                       required 
                                                        placeholder="0">
-                                                @error("results.$loop->index.marks")
+                                                @error("results.{$loop->index}.marks")
                                                     <div class="text-sm text-red-600 mt-1 text-center">{{ $message }}</div>
                                                 @enderror
                                             </td>
@@ -180,15 +246,30 @@
                         <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
                             <div class="flex items-center justify-between">
                                 <div class="text-sm text-gray-600">
-                                    <span class="font-medium">Note:</span> All fields are required. Grades will be calculated automatically.
+                                    @if(session('conflicts'))
+                                        <span class="font-medium text-yellow-700">⚠️ Warning:</span> Click "Confirm & Overwrite" to update existing marks.
+                                    @elseif($selectedSubjectId && $existingResults->count() > 0)
+                                        <span class="font-medium text-blue-700">✏️ Edit Mode:</span> You can update existing marks. Leave blank to skip a student.
+                                    @else
+                                        <span class="font-medium">Note:</span> Leave marks blank to skip a student. Grades are auto-calculated.
+                                    @endif
                                 </div>
                                 <div class="flex items-center space-x-3">
                                     <a href="{{ route('exams.show', $exam) }}" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors">
                                         Cancel
                                     </a>
-                                    <button type="submit" class="px-6 py-2 bg-gray-800 hover:bg-gray-900 text-white font-semibold rounded-lg transition-colors">
-                                        Save All Results
-                                    </button>
+                                    @if(session('conflicts'))
+                                        <button type="submit" class="px-6 py-2 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold rounded-lg transition-colors flex items-center">
+                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                            </svg>
+                                            Confirm & Overwrite All
+                                        </button>
+                                    @else
+                                        <button type="submit" class="px-6 py-2 bg-gray-800 hover:bg-gray-900 text-white font-semibold rounded-lg transition-colors">
+                                            Save All Results
+                                        </button>
+                                    @endif
                                 </div>
                             </div>
                         </div>

@@ -23,6 +23,67 @@
     </x-slot>
 
     <div class="container-mobile section-spacing">
+        <!-- Success Message -->
+        @if (session('success'))
+            <div class="bg-green-50 border-2 border-green-200 rounded-xl p-4 mb-6 animate-fade-in">
+                <div class="flex items-start">
+                    <svg class="w-6 h-6 text-green-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div class="flex-1">
+                        <p class="text-green-800 font-medium whitespace-pre-line">{{ session('success') }}</p>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        <!-- Warning Message -->
+        @if (session('warning'))
+            <div class="bg-yellow-50 border-2 border-yellow-200 rounded-xl p-4 mb-6 animate-fade-in">
+                <div class="flex items-start">
+                    <svg class="w-6 h-6 text-yellow-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <div class="flex-1">
+                        <p class="text-yellow-800 font-medium whitespace-pre-line">{{ session('warning') }}</p>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        <!-- Error Messages -->
+        @if (session('error'))
+            <div class="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6 animate-fade-in">
+                <div class="flex items-start">
+                    <svg class="w-6 h-6 text-red-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div class="flex-1">
+                        <p class="text-red-800 font-semibold mb-2">Import Error</p>
+                        <p class="text-red-700 whitespace-pre-line font-mono text-sm">{{ session('error') }}</p>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6 animate-fade-in">
+                <div class="flex items-start">
+                    <svg class="w-6 h-6 text-red-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div class="flex-1">
+                        <p class="text-red-800 font-semibold mb-2">Validation Errors:</p>
+                        <ul class="list-disc list-inside text-red-700 space-y-1 text-sm">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <!-- Instructions -->
         <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-6 mb-8">
             <div class="flex items-start space-x-4">
@@ -46,11 +107,11 @@
                         </div>
                         <div class="flex items-start space-x-2">
                             <span class="font-bold">3.</span>
-                            <p>Date format: YYYY-MM-DD (e.g., 2008-05-15)</p>
+                            <p>Date format: DD/MM/YYYY (e.g., 15/05/2008) or YYYY-MM-DD (e.g., 2008-05-15)</p>
                         </div>
                         <div class="flex items-start space-x-2">
                             <span class="font-bold">4.</span>
-                            <p>Gender: Male or Female (case insensitive)</p>
+                            <p>Gender: Male, Female, or Other (case insensitive, M/F also accepted)</p>
                         </div>
                         <div class="flex items-start space-x-2">
                             <span class="font-bold">5.</span>
@@ -59,6 +120,10 @@
                         <div class="flex items-start space-x-2">
                             <span class="font-bold">6.</span>
                             <p>Upload your completed CSV file below for preview and validation</p>
+                        </div>
+                        <div class="flex items-start space-x-2">
+                            <span class="font-bold">7.</span>
+                            <p class="text-blue-900 font-semibold">If creating user accounts: All students will receive the default password <code class="bg-blue-100 px-2 py-0.5 rounded">Student@2024</code> (they should change it on first login)</p>
                         </div>
                     </div>
                 </div>
@@ -124,11 +189,44 @@
         const fileInput = document.getElementById('file-input');
         const fileInfo = document.getElementById('file-info');
         const fileName = document.getElementById('file-name');
+        const dropzone = document.getElementById('dropzone');
 
         fileInput.addEventListener('change', function(e) {
             if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                const fileSizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+                
                 fileInfo.classList.remove('hidden');
-                fileName.textContent = e.target.files[0].name;
+                fileName.textContent = `${file.name} (${fileSizeInMB} MB)`;
+                
+                console.log('File selected:', file.name, 'Size:', fileSizeInMB, 'MB');
+            } else {
+                fileInfo.classList.add('hidden');
+                fileName.textContent = '';
+            }
+        });
+
+        // Drag and drop functionality
+        dropzone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.add('border-blue-500', 'bg-blue-50');
+        });
+
+        dropzone.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.remove('border-blue-500', 'bg-blue-50');
+        });
+
+        dropzone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.remove('border-blue-500', 'bg-blue-50');
+            
+            if (e.dataTransfer.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                fileInput.dispatchEvent(new Event('change'));
             }
         });
     </script>

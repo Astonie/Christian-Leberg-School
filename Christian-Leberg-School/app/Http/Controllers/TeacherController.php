@@ -210,26 +210,22 @@ class TeacherController extends Controller
         
         // Get streams and student count for each subject
         $subjects = $subjects->map(function($subject) use ($teacher, $year) {
-            // Get student count
-            $subject->students_count = $subject->students()->count();
+            // Get only students that this teacher teaches for this subject
+            $teacherStudents = $teacher->getStudentsForSubject($subject->id, $year);
+            $subject->students_count = $teacherStudents->count();
+            $subject->students_list = $teacherStudents; // Include the actual students
             
-            // Get teacher streams for this subject
-            $subject->teacher_streams = $teacher->streams()
-                ->where('academic_year_id', $year?->id)
-                ->whereHas('schoolClass.subjects', function($q) use ($subject) {
-                    $q->where('subjects.id', $subject->id);
-                })
-                ->with('schoolClass')
-                ->get();
+            // Get streams where teacher teaches this specific subject
+            $subject->teacher_streams = $teacher->getStreamsForSubject($subject->id, $year);
             
             return $subject;
         });
         
-        // Calculate statistics
+        // Calculate statistics based on teacher's actual data
         $statistics = [
             'total_subjects' => $subjects->count(),
-            'total_students' => $subjects->sum('students_count'),
-            'total_streams' => $teacher->streams()->where('academic_year_id', $year?->id)->count(),
+            'total_students' => $subjects->sum('students_count'), // Sum of unique students across all subjects
+            'total_streams' => $teacher->streams()->where('stream_teacher.academic_year_id', $year?->id)->count(),
             'active_exams' => \App\Models\Exam::where('academic_year_id', $year?->id)
                 ->where('start_date', '<=', now())
                 ->where('end_date', '>=', now())
@@ -244,7 +240,7 @@ class TeacherController extends Controller
         $user = auth()->user();
         $teacher = $user->teacher;
         $year = \App\Models\AcademicYear::active()->first();
-        $streams = $teacher ? $teacher->streams()->where('academic_year_id', $year?->id)->with(['schoolClass','students.user'])->get() : collect();
+        $streams = $teacher ? $teacher->streams()->where('stream_teacher.academic_year_id', $year?->id)->with(['schoolClass','students.user'])->get() : collect();
         return view('teachers.my_streams', compact('streams'));
     }
 

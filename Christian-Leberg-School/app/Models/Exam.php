@@ -14,11 +14,18 @@ class Exam extends Model
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
+        'results_released' => 'boolean',
+        'results_released_at' => 'datetime',
     ];
 
     public function academicYear()
     {
         return $this->belongsTo(AcademicYear::class);
+    }
+
+    public function term()
+    {
+        return $this->belongsTo(Term::class);
     }
 
     public function results()
@@ -49,6 +56,11 @@ class Exam extends Model
     public function gradingScale()
     {
         return $this->belongsTo(GradingScale::class);
+    }
+
+    public function releasedBy()
+    {
+        return $this->belongsTo(User::class, 'released_by');
     }
 
     /**

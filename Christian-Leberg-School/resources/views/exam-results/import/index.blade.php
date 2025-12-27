@@ -32,7 +32,7 @@
                                 class="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
                                 <option value="">Select Examination</option>
                                 @foreach($exams as $exam)
-                                    <option value="{{ $exam->id }}">{{ $exam->name }} ({{ $exam->term }})</option>
+                                    <option value="{{ $exam->id }}">{{ $exam->name }} ({{ $exam->term->name }})</option>
                                 @endforeach
                             </select>
                         </div>

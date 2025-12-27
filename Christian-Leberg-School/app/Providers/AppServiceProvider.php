@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\View;
 use App\Models\Subject;
 use App\Models\Student;
 use App\Models\AcademicYear;
@@ -24,6 +25,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register view composers for CMS
+        View::composer('website.*', \App\View\Composers\WebsiteComposer::class);
+
         // Gate to determine whether a teacher can enter scores for a specific student & subject
         Gate::define('enter-scores', function ($user, Subject $subject, Student $student) {
             if (! $user || $user->role?->slug !== 'teacher') {

@@ -15,6 +15,8 @@ class Student extends Model
     protected $casts = [
         'admission_date' => 'date',
         'date_of_birth' => 'date',
+        'results_access_blocked' => 'boolean',
+        'blocked_at' => 'datetime',
     ];
 
     public function user()
@@ -40,6 +42,11 @@ class Student extends Model
     {
         return $this->hasMany(ExamResult::class);
     }
+    
+    public function studentScores()
+    {
+        return $this->hasMany(StudentScore::class);
+    }
 
     public function activeStreams()
     {
@@ -62,5 +69,28 @@ class Student extends Model
     public function attendanceRecords()
     {
         return $this->hasMany(AttendanceRecord::class);
+    }
+
+    public function blockedBy()
+    {
+        return $this->belongsTo(User::class, 'blocked_by');
+    }
+
+    /**
+     * Check if student can access exam results
+     */
+    public function canAccessResults(Exam $exam = null): bool
+    {
+        // Check if student is blocked from all results
+        if ($this->results_access_blocked) {
+            return false;
+        }
+
+        // If specific exam provided, check if that exam's results are released
+        if ($exam && !$exam->results_released) {
+            return false;
+        }
+
+        return true;
     }
 }
