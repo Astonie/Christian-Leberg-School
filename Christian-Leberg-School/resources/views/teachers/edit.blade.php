@@ -62,8 +62,8 @@
                             <div>
                                 <x-input-label for="employment_type" :value="__('Employment Type')" />
                                 <select id="employment_type" name="employment_type" class="block mt-1 w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-md shadow-sm">
-                                    <option value="full_time" {{ old('employment_type', $teacher->employment_type) == 'full_time' ? 'selected' : '' }}>Full Time</option>
-                                    <option value="part_time" {{ old('employment_type', $teacher->employment_type) == 'part_time' ? 'selected' : '' }}>Part Time</option>
+                                    <option value="full-time" {{ old('employment_type', $teacher->employment_type) == 'full-time' ? 'selected' : '' }}>Full Time</option>
+                                    <option value="part-time" {{ old('employment_type', $teacher->employment_type) == 'part-time' ? 'selected' : '' }}>Part Time</option>
                                     <option value="contract" {{ old('employment_type', $teacher->employment_type) == 'contract' ? 'selected' : '' }}>Contract</option>
                                 </select>
                                 <x-input-error :messages="$errors->get('employment_type')" class="mt-2" />

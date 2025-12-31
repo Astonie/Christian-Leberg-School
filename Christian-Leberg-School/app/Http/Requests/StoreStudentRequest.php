@@ -20,7 +20,7 @@ class StoreStudentRequest extends FormRequest
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'unique:users,email'],
-            'admission_number' => ['required', 'string', 'unique:students,admission_number'],
+            'admission_number' => ['nullable', 'string', 'unique:students,admission_number'],
             'admission_date' => ['required', 'date'],
             'date_of_birth' => ['required', 'date'],
             'gender' => ['required', 'in:male,female,other'],

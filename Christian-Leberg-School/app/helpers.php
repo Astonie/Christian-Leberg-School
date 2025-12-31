@@ -29,3 +29,16 @@ if (!function_exists('set_setting')) {
         return \App\Models\Setting::set($key, $value, $type, $group);
     }
 }
+
+if (!function_exists('feature_enabled')) {
+    /**
+     * Check if a feature is enabled
+     *
+     * @param string $feature
+     * @return bool
+     */
+    function feature_enabled($feature)
+    {
+        return \App\Models\FeatureToggle::isEnabled($feature);
+    }
+}

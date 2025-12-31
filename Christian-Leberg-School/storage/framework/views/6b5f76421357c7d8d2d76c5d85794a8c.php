@@ -11,12 +11,14 @@
      <?php $__env->slot('header', null, []); ?> 
         <div class="flex items-center justify-between">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">Teachers Management</h2>
-            <a href="<?php echo e(route('teachers.create')); ?>" class="inline-flex items-center px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white font-semibold rounded-lg shadow-sm transition-all duration-200">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                </svg>
-                Add Teacher
-            </a>
+            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('create', App\Models\Teacher::class)): ?>
+                <a href="<?php echo e(route('teachers.create')); ?>" class="inline-flex items-center px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white font-semibold rounded-lg shadow-sm transition-all duration-200">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Add Teacher
+                </a>
+            <?php endif; ?>
         </div>
      <?php $__env->endSlot(); ?>
 
@@ -45,8 +47,8 @@
                             <label for="employment_type" class="block text-sm font-medium text-gray-700 mb-1">Employment Type</label>
                             <select id="employment_type" name="employment_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-400">
                                 <option value="">All Types</option>
-                                <option value="full_time" <?php echo e(request('employment_type') == 'full_time' ? 'selected' : ''); ?>>Full Time</option>
-                                <option value="part_time" <?php echo e(request('employment_type') == 'part_time' ? 'selected' : ''); ?>>Part Time</option>
+                                <option value="full-time" <?php echo e(request('employment_type') == 'full-time' ? 'selected' : ''); ?>>Full Time</option>
+                                <option value="part-time" <?php echo e(request('employment_type') == 'part-time' ? 'selected' : ''); ?>>Part Time</option>
                                 <option value="contract" <?php echo e(request('employment_type') == 'contract' ? 'selected' : ''); ?>>Contract</option>
                             </select>
                         </div>
@@ -124,7 +126,7 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-gray-600">Full Time</p>
-                            <p class="text-3xl font-bold text-gray-900 mt-1"><?php echo e(\App\Models\Teacher::where('employment_type', 'full_time')->count()); ?></p>
+                            <p class="text-3xl font-bold text-gray-900 mt-1"><?php echo e(\App\Models\Teacher::where('employment_type', 'full-time')->count()); ?></p>
                         </div>
                         <div class="bg-gray-100 rounded-full p-3">
                             <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

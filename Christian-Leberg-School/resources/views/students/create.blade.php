@@ -36,8 +36,9 @@
                         <h3 class="text-lg font-medium text-gray-900 mb-4">Student Profile</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                             <div>
-                                <x-input-label for="admission_number" :value="__('Admission Number')" />
-                                <x-text-input id="admission_number" class="block mt-1 w-full" type="text" name="admission_number" :value="old('admission_number')" required />
+                                <x-input-label for="admission_number" :value="__('Admission Number (Optional)')" />
+                                <x-text-input id="admission_number" class="block mt-1 w-full" type="text" name="admission_number" :value="old('admission_number')" placeholder="Leave blank for auto-generation" />
+                                <p class="mt-1 text-sm text-gray-500">Leave blank to auto-generate (e.g., {{ now()->year }}-0001)</p>
                                 <x-input-error :messages="$errors->get('admission_number')" class="mt-2" />
                             </div>
                             <div>

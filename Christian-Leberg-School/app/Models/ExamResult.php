@@ -110,7 +110,17 @@ class ExamResult extends Model
             return null;
         }
         
-        // Try exam's specific grading scale first
+        // Try to use the student's class grading system first
+        if ($this->student && $this->student->schoolClass && $this->student->schoolClass->gradingSystem) {
+            $gradingSystem = $this->student->schoolClass->gradingSystem;
+            foreach ($gradingSystem->scales->sortBy('order') as $scale) {
+                if ($marks >= $scale->min_score && $marks <= $scale->max_score) {
+                    return $scale->code;
+                }
+            }
+        }
+        
+        // Try exam's specific grading scale next
         if ($this->exam && $this->exam->gradingScale) {
             return $this->getGradeFromScale($marks, $this->exam->gradingScale);
         }
@@ -160,6 +170,16 @@ class ExamResult extends Model
     public function calculatePoints()
     {
         $marks = $this->marks;
+        
+        // Try to use the student's class grading system first
+        if ($this->student && $this->student->schoolClass && $this->student->schoolClass->gradingSystem) {
+            $gradingSystem = $this->student->schoolClass->gradingSystem;
+            foreach ($gradingSystem->scales->sortBy('order') as $scale) {
+                if ($marks >= $scale->min_score && $marks <= $scale->max_score) {
+                    return $scale->points ?? 0;
+                }
+            }
+        }
         
         // Try to use the active grading system
         $gradingSystem = \App\Models\GradingSystem::where('is_active', true)->first();

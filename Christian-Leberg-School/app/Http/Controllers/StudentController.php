@@ -190,10 +190,13 @@ class StudentController extends Controller
                 'is_active' => true,
             ]);
 
+            // Auto-generate admission number if not provided
+            $admissionNumber = $request->admission_number ?: Student::generateAdmissionNumber();
+
             // Create Student Profile
             $student = Student::create([
                 'user_id' => $user->id,
-                'admission_number' => $request->admission_number,
+                'admission_number' => $admissionNumber,
                 'admission_date' => $request->admission_date,
                 'date_of_birth' => $request->date_of_birth,
                 'gender' => $request->gender,

@@ -350,7 +350,9 @@
                                                 </div>
                                                 <div class="flex-1 min-w-0">
                                                     <h4 class="font-semibold text-gray-900 truncate">{{ $exam->name }}</h4>
-                                                    <p class="text-sm text-gray-600 mt-1">{{ $exam->examType->name }} • {{ $exam->term->name }}</p>
+                                                    <p class="text-sm text-gray-600 mt-1">
+                                                        {{ $exam->examType?->name ?? 'Exam' }} • {{ $exam->term?->name ?? 'Term' }}
+                                                    </p>
                                                     <p class="text-xs text-amber-700 mt-1 font-medium">
                                                         {{ \Carbon\Carbon::parse($exam->start_date)->diffForHumans() }}
                                                     </p>

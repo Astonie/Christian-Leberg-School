@@ -60,7 +60,12 @@ class StreamController extends Controller
             }
 
             // Single stream creation
-            $stream = $this->performCreate(array_merge($request->validated(), ['academic_year_id' => $academicYear->id]));
+            $stream = Stream::create([
+                'name' => $request->name,
+                'class_id' => $request->class_id,
+                'academic_year_id' => $academicYear->id,
+                'capacity' => $request->capacity,
+            ]);
         } catch (\Exception $e) {
                 $context = ['error' => $e->getMessage(), 'payload' => $request->validated(), 'user_id' => $request->user()?->id, 'route' => request()->route()?->getName(), 'ip' => request()->ip()];
                 \Log::error('Failed to create stream', $context);
@@ -120,10 +125,16 @@ class StreamController extends Controller
 
                     if ($existing) {
                         // Update pivot
-                        $stream->teachers()->updateExistingPivot($request->class_teacher_id, ['is_class_teacher' => true]);
+                        $stream->teachers()->updateExistingPivot($request->class_teacher_id, [
+                            'is_class_teacher' => true,
+                            'academic_year_id' => $stream->academic_year_id
+                        ]);
                     } else {
                         // Attach; subject_id is nullable so we can attach without it
-                        $stream->teachers()->attach($request->class_teacher_id, ['is_class_teacher' => true]);
+                        $stream->teachers()->attach($request->class_teacher_id, [
+                            'is_class_teacher' => true,
+                            'academic_year_id' => $stream->academic_year_id
+                        ]);
                     }
                 }
             } catch (\Exception $e) {

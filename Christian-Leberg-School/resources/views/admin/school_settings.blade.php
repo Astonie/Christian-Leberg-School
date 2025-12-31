@@ -21,10 +21,6 @@
                     @endif
                 </div>
 
-                <div class="mb-4">
-                    <a href="{{ route('admin.grading_scales.index') }}" class="text-sm text-blue-600 underline">Manage Grading Scales</a>
-                </div>
-
                 <form action="{{ route('admin.settings.school.logo') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="mb-4">

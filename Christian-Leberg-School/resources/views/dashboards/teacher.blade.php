@@ -303,14 +303,22 @@
                                                     <span class="ml-2 inline-block bg-red-100 text-red-800 text-xs px-2 rounded-full">{{ $pendingAssigned }} pending</span>
                                                 @endif
                                             </div>
-                                            <div class="flex gap-2">
-                                                <a href="{{ route('exams.results.create_for_subject', ['exam' => $exam->id, 'subject' => $assignedSubject->id]) }}?stream_id={{ $stream->id }}" class="flex-1 text-center px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
-                                                    Enter Results
-                                                </a>
-                                                <a href="{{ route('attendance.index') }}?stream_id={{ $stream->id }}" class="flex-1 text-center px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors">
-                                                    Attendance
-                                                </a>
-                                            </div>
+                                            @if($relevantExams->isNotEmpty() && $exam)
+                                                <div class="flex gap-2">
+                                                    <a href="{{ route('exams.results.create_for_subject', ['exam' => $exam->id, 'subject' => $assignedSubject->id]) }}?stream_id={{ $stream->id }}" class="flex-1 text-center px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
+                                                        Enter Results
+                                                    </a>
+                                                    <a href="{{ route('attendance.index') }}?stream_id={{ $stream->id }}" class="flex-1 text-center px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors">
+                                                        Attendance
+                                                    </a>
+                                                </div>
+                                            @else
+                                                <div class="flex gap-2">
+                                                    <a href="{{ route('attendance.index') }}?stream_id={{ $stream->id }}" class="flex-1 text-center px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors">
+                                                        Attendance
+                                                    </a>
+                                                </div>
+                                            @endif
                                         @endif
                                     </div>
                                 @endforeach
@@ -320,35 +328,23 @@
                 </div>
 
                 <!-- Quick Enter Results -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div class="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 border-b border-blue-200">
-                        <h3 class="text-lg font-bold text-blue-900 flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                            </svg>
-                            Quick Results Entry
-                        </h3>
-                    </div>
-                    <div class="p-6">
-                        @if($subjects->isEmpty() || $streams->isEmpty() || $allExams->isEmpty())
-                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                                <div class="flex items-start">
-                                    <svg class="w-5 h-5 text-yellow-600 mt-0.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                                    </svg>
-                                    <div class="text-sm text-yellow-800">
-                                        <p class="font-medium mb-1">Setup Required</p>
-                                        <p>Ensure you have an active exam, subjects, and streams assigned to enter results.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        @else
+                @if($relevantExams->isNotEmpty())
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 border-b border-blue-200">
+                            <h3 class="text-lg font-bold text-blue-900 flex items-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                                Quick Results Entry
+                            </h3>
+                        </div>
+                        <div class="p-6">
                             <form id="enter-results-form" onsubmit="return false;" class="space-y-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Examination</label>
                                     <select id="er-exam" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                        @foreach($allExams as $exam)
-                                            <option value="{{ $exam->id }}">{{ $exam->name }} ({{ $exam->term->name }})</option>
+                                        @foreach($relevantExams as $relevantExam)
+                                            <option value="{{ $relevantExam->id }}">{{ $relevantExam->name }} ({{ $relevantExam->term->name }})</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -385,9 +381,9 @@
                                     window.location = '/exams/' + exam + '/subjects/' + subject + '/results/create?stream_id=' + stream;
                                 });
                             </script>
-                        @endif
+                        </div>
                     </div>
-                </div>
+                @endif
                 
             </div>
 

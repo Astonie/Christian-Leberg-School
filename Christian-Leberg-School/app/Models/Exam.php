@@ -28,6 +28,9 @@ class Exam extends Model
         'weight_percentage',
         'assessment_structure_id',
         'description',
+        'created_by',
+        'assessment_type',
+        'total_marks',
     ];
 
     /**

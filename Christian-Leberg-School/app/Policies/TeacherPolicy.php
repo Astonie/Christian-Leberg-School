@@ -37,29 +37,29 @@ class TeacherPolicy
 
     /**
      * Determine whether the user can create teachers.
-     * Only admin can create teachers.
+     * Admin and head-teacher can create teachers.
      */
     public function create(User $user): bool
     {
-        return $user->hasRole('admin');
+        return $user->hasRole(['admin', 'head-teacher']);
     }
 
     /**
      * Determine whether the user can update the teacher.
-     * Only admin can update teachers.
+     * Admin and head-teacher can update teachers.
      */
     public function update(User $user, Teacher $teacher): bool
     {
-        return $user->hasRole('admin');
+        return $user->hasRole(['admin', 'head-teacher']);
     }
 
     /**
      * Determine whether the user can delete the teacher.
-     * Only admin can delete teachers.
+     * Admin and head-teacher can delete teachers.
      */
     public function delete(User $user, Teacher $teacher): bool
     {
-        return $user->hasRole('admin');
+        return $user->hasRole(['admin', 'head-teacher']);
     }
 
     /**

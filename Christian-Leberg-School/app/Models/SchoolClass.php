@@ -20,6 +20,7 @@ class SchoolClass extends Model
         'name',
         'level',
         'description',
+        'grading_system_id',
     ];
 
     /**
@@ -43,5 +44,10 @@ class SchoolClass extends Model
         return $this->belongsToMany(Subject::class, 'class_subject', 'class_id', 'subject_id')
                     ->withPivot('is_compulsory')
                     ->withTimestamps();
+    }
+
+    public function gradingSystem()
+    {
+        return $this->belongsTo(GradingSystem::class);
     }
 }

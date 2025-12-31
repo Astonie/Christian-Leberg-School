@@ -13,12 +13,35 @@ class ExamController extends Controller
 {
     public function index(Request $request)
     {
+        $user = auth()->user();
+        $isTeacher = $user->hasRole('teacher');
+        
         $archived = $request->get('archived', '0'); // Default to not archived
         
         // Include soft deleted exams when viewing archived
         $query = $archived === '1' 
             ? Exam::onlyTrashed()->with(['academicYear', 'term', 'examType'])
             : Exam::with(['academicYear', 'term', 'examType']);
+
+        // If user is a teacher, filter to only show exams for their subjects/classes
+        if ($isTeacher && $user->teacher) {
+            $teacherSubjectIds = $user->teacher->subjects()->pluck('subjects.id')->toArray();
+            $teacherStreamIds = $user->teacher->streams()->pluck('streams.id')->toArray();
+            
+            // Filter exams where teacher teaches the subject OR assigned to teacher's streams
+            $query->where(function($q) use ($teacherSubjectIds, $teacherStreamIds) {
+                if (!empty($teacherSubjectIds)) {
+                    $q->whereHas('subjects', function($sq) use ($teacherSubjectIds) {
+                        $sq->whereIn('subjects.id', $teacherSubjectIds);
+                    });
+                }
+                if (!empty($teacherStreamIds)) {
+                    $q->orWhereHas('streams', function($sq) use ($teacherStreamIds) {
+                        $sq->whereIn('streams.id', $teacherStreamIds);
+                    });
+                }
+            });
+        }
 
         // Get filter parameters
         $academicYearId = $request->get('academic_year');
@@ -73,12 +96,40 @@ class ExamController extends Controller
 
         // Statistics
         $activeYear = AcademicYear::where('is_active', true)->first();
-        $stats = [
-            'total' => Exam::count(),
-            'current_year' => $activeYear ? Exam::where('academic_year_id', $activeYear->id)->count() : 0,
-            'active' => Exam::where('end_date', '>=', now())->count(),
-            'archived' => Exam::onlyTrashed()->count(),
-        ];
+        
+        if ($isTeacher && $user->teacher) {
+            // Teacher-specific stats
+            $teacherSubjectIds = $user->teacher->subjects()->pluck('subjects.id')->toArray();
+            $teacherStreamIds = $user->teacher->streams()->pluck('streams.id')->toArray();
+            
+            $baseQuery = Exam::where(function($q) use ($teacherSubjectIds, $teacherStreamIds) {
+                if (!empty($teacherSubjectIds)) {
+                    $q->whereHas('subjects', function($sq) use ($teacherSubjectIds) {
+                        $sq->whereIn('subjects.id', $teacherSubjectIds);
+                    });
+                }
+                if (!empty($teacherStreamIds)) {
+                    $q->orWhereHas('streams', function($sq) use ($teacherStreamIds) {
+                        $sq->whereIn('streams.id', $teacherStreamIds);
+                    });
+                }
+            });
+            
+            $stats = [
+                'total' => (clone $baseQuery)->count(),
+                'current_year' => $activeYear ? (clone $baseQuery)->where('academic_year_id', $activeYear->id)->count() : 0,
+                'active' => (clone $baseQuery)->where('end_date', '>=', now())->count(),
+                'archived' => (clone $baseQuery)->onlyTrashed()->count(),
+            ];
+        } else {
+            // Admin/Head teacher stats (all exams)
+            $stats = [
+                'total' => Exam::count(),
+                'current_year' => $activeYear ? Exam::where('academic_year_id', $activeYear->id)->count() : 0,
+                'active' => Exam::where('end_date', '>=', now())->count(),
+                'archived' => Exam::onlyTrashed()->count(),
+            ];
+        }
 
         return view('exams.index', compact('exams', 'academicYears', 'terms', 'examTypes', 'stats'));
     }
@@ -159,6 +210,9 @@ class ExamController extends Controller
     {
         $this->authorize('view', $exam);
         
+        $user = auth()->user();
+        $isTeacher = $user->hasRole('teacher');
+        
         $exam->load([
             'academicYear',
             'term',
@@ -169,8 +223,31 @@ class ExamController extends Controller
             'results.student.user',
             'results.subject'
         ]);
+        
+        // Filter subjects and results for teachers
+        if ($isTeacher && $user->teacher) {
+            $teacherSubjectIds = $user->teacher->subjects()->pluck('subjects.id')->toArray();
+            
+            // Filter subjects to only those the teacher teaches
+            $exam->setRelation('subjects', $exam->subjects->filter(function($subject) use ($teacherSubjectIds) {
+                return in_array($subject->id, $teacherSubjectIds);
+            }));
+            
+            // Filter results to only those for subjects the teacher teaches
+            $exam->setRelation('results', $exam->results->filter(function($result) use ($teacherSubjectIds) {
+                return in_array($result->subject_id, $teacherSubjectIds);
+            }));
+            
+            // Get teacher's stream IDs to filter classes
+            $teacherStreamIds = $user->teacher->streams()->pluck('streams.id')->toArray();
+            if (!empty($teacherStreamIds)) {
+                $exam->setRelation('classes', $exam->classes->filter(function($class) use ($teacherStreamIds) {
+                    return $class->streams->whereIn('id', $teacherStreamIds)->isNotEmpty();
+                }));
+            }
+        }
 
-        // Calculate statistics
+        // Calculate statistics (based on filtered data for teachers)
         $totalStudents = Student::whereHas('streams', function($q) use ($exam) {
             $q->whereIn('class_id', $exam->classes->pluck('id'))
               ->where('student_stream.academic_year_id', $exam->academic_year_id)
@@ -184,7 +261,7 @@ class ExamController extends Controller
         $actualResults = $exam->results->count();
         $completionPercentage = $expectedResults > 0 ? round(($actualResults / $expectedResults) * 100, 1) : 0;
 
-        // Get top performers
+        // Get top performers (only from filtered results for teachers)
         $topPerformers = $exam->results()
             ->selectRaw('student_id, AVG(marks) as average')
             ->groupBy('student_id')
@@ -202,7 +279,8 @@ class ExamController extends Controller
             'expectedResults',
             'actualResults',
             'completionPercentage',
-            'topPerformers'
+            'topPerformers',
+            'isTeacher'
         ));
     }
 

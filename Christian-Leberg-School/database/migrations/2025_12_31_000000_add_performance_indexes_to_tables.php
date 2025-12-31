@@ -7,6 +7,20 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
+     * Check if an index exists on a table.
+     */
+    private function indexExists(string $table, string $indexName): bool
+    {
+        $indexes = Schema::getIndexes($table);
+        foreach ($indexes as $index) {
+            if ($index['name'] === $indexName) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Run the migrations.
      *
      * Add performance indexes to frequently queried tables.
@@ -20,9 +34,15 @@ return new class extends Migration
 
         // Students table indexes
         Schema::table('students', function (Blueprint $table) {
-            $table->index('admission_number', 'students_admission_number_index');
-            $table->index('results_access_blocked', 'students_results_access_blocked_index');
-            $table->index('user_id', 'students_user_id_index');
+            if (!$this->indexExists('students', 'students_admission_number_index')) {
+                $table->index('admission_number', 'students_admission_number_index');
+            }
+            if (!$this->indexExists('students', 'students_results_access_blocked_index')) {
+                $table->index('results_access_blocked', 'students_results_access_blocked_index');
+            }
+            if (!$this->indexExists('students', 'students_user_id_index')) {
+                $table->index('user_id', 'students_user_id_index');
+            }
         });
 
         // Exam Results table - Composite index for common queries
@@ -77,13 +97,16 @@ return new class extends Migration
 
         // Users table
         Schema::table('users', function (Blueprint $table) {
-            $table->index('role_id', 'users_role_id_index');
-            $table->index('is_active', 'users_is_active_index');
+            // Note: role_id index already exists from 2025_12_14_141650_add_role_fields_to_users_table.php
+            if (!$this->indexExists('users', 'users_is_active_index')) {
+                $table->index('is_active', 'users_is_active_index');
+            }
         });
 
         // Academic Years table
         Schema::table('academic_years', function (Blueprint $table) {
-            $table->index('is_active', 'academic_years_is_active_index');
+            // Note: is_active index already exists from 2025_12_14_141801_create_academic_years_table.php
+            // Not creating duplicate index
         });
 
         // Terms table
@@ -153,7 +176,7 @@ return new class extends Migration
         });
 
         Schema::table('academic_years', function (Blueprint $table) {
-            $table->dropIndex('academic_years_is_active_index');
+            // Note: is_active index was created by original migration, not dropped here
         });
 
         Schema::table('terms', function (Blueprint $table) {

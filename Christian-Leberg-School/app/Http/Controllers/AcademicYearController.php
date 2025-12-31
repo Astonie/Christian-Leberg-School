@@ -12,10 +12,17 @@ class AcademicYearController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $years = AcademicYear::latest('start_date')->get();
-        return view('academic-years.index', compact('years'));
+        $showArchived = $request->get('archived', false);
+        
+        if ($showArchived) {
+            $years = AcademicYear::onlyTrashed()->latest('start_date')->get();
+        } else {
+            $years = AcademicYear::latest('start_date')->get();
+        }
+        
+        return view('academic-years.index', compact('years', 'showArchived'));
     }
 
     /**
@@ -88,10 +95,49 @@ class AcademicYearController extends Controller
      */
     public function destroy(AcademicYear $academicYear)
     {
-        // Check if it has dependencies (students, streams, etc.) before deleting
-        // For now, standard delete
+        // Prevent deletion of active academic year
+        if ($academicYear->is_active) {
+            return redirect()->route('academic-years.index')
+                ->with('error', 'Cannot delete the active academic year. Please deactivate it first.');
+        }
+
+        // Check for critical dependencies
+        $streamCount = $academicYear->streams()->count();
+        $examCount = $academicYear->exams()->count();
+        $termCount = $academicYear->terms()->count();
+        
+        // Count student enrollments for this year
+        $studentEnrollments = \DB::table('student_stream')
+            ->where('academic_year_id', $academicYear->id)
+            ->count();
+
+        if ($streamCount > 0 || $examCount > 0 || $studentEnrollments > 0) {
+            return redirect()->route('academic-years.index')
+                ->with('warning', "Cannot delete academic year '{$academicYear->name}'. It has {$streamCount} streams, {$examCount} exams, and {$studentEnrollments} student enrollments. This data will be permanently lost. Use soft delete (archive) instead.");
+        }
+
+        // Soft delete (archive) the academic year
         $academicYear->delete();
 
-        return redirect()->route('academic-years.index')->with('success', 'Academic Year deleted successfully.');
+        return redirect()->route('academic-years.index')
+            ->with('success', "Academic year '{$academicYear->name}' has been archived.");
+    }
+
+    /**
+     * Restore a soft-deleted academic year.
+     */
+    public function restore($id)
+    {
+        $academicYear = AcademicYear::withTrashed()->findOrFail($id);
+        
+        if (!$academicYear->trashed()) {
+            return redirect()->route('academic-years.index')
+                ->with('info', 'Academic year is not archived.');
+        }
+
+        $academicYear->restore();
+
+        return redirect()->route('academic-years.index')
+            ->with('success', "Academic year '{$academicYear->name}' has been restored.");
     }
 }

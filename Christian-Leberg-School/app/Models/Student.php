@@ -48,6 +48,33 @@ class Student extends Model
         'blocked_at' => 'datetime',
     ];
 
+    /**
+     * Generate a unique admission number
+     * Format: YEAR-XXXX (e.g., 2025-0001)
+     */
+    public static function generateAdmissionNumber(): string
+    {
+        $year = now()->year;
+        $prefix = $year . '-';
+        
+        // Get the last admission number for this year
+        $lastStudent = self::where('admission_number', 'like', $prefix . '%')
+            ->orderBy('admission_number', 'desc')
+            ->first();
+        
+        if ($lastStudent) {
+            // Extract the numeric part and increment
+            $lastNumber = (int) substr($lastStudent->admission_number, strlen($prefix));
+            $newNumber = $lastNumber + 1;
+        } else {
+            // First student of this year
+            $newNumber = 1;
+        }
+        
+        // Format with leading zeros (4 digits)
+        return $prefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

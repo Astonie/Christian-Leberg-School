@@ -19,11 +19,46 @@ class ExamPolicy
 
     /**
      * Determine whether the user can view the exam.
-     * Admin, head teachers, deputy head teachers, and teachers can view exams.
+     * Admin, head teachers, deputy head teachers can view all exams.
+     * Teachers can only view exams for subjects they teach.
      */
     public function view(User $user, Exam $exam): bool
     {
-        return $user->hasAnyRole(['admin', 'head-teacher', 'deputy-head-teacher', 'teacher']);
+        // Admin and academic managers can view any exam
+        if ($user->hasAnyRole(['admin', 'head-teacher', 'deputy-head-teacher'])) {
+            return true;
+        }
+        
+        // Teachers can only view exams for subjects they teach
+        if ($user->hasRole('teacher') && $user->teacher) {
+            $teacherSubjectIds = $user->teacher->subjects()->pluck('subjects.id')->toArray();
+            
+            // Check if exam has any subjects the teacher teaches
+            $hasTeachingSubject = $exam->subjects()->whereIn('subjects.id', $teacherSubjectIds)->exists();
+            
+            if ($hasTeachingSubject) {
+                return true;
+            }
+            
+            // Also check if teacher is assigned to any streams taking this exam
+            $teacherStreamIds = $user->teacher->streams()->pluck('streams.id')->toArray();
+            $examClassIds = $exam->classes()->pluck('classes.id')->toArray();
+            
+            // Check if any of teacher's streams are in the exam classes
+            if (!empty($teacherStreamIds) && !empty($examClassIds)) {
+                $hasAssignedStream = \App\Models\Stream::whereIn('id', $teacherStreamIds)
+                    ->whereIn('class_id', $examClassIds)
+                    ->exists();
+                    
+                if ($hasAssignedStream) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+        
+        return false;
     }
 
     /**

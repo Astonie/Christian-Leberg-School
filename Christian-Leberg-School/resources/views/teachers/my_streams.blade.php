@@ -19,7 +19,6 @@
                                     <div class="flex items-center gap-2">
                                         <a href="{{ route('students.index') }}?stream_id={{ $stream->id }}" class="px-3 py-1 bg-blue-100 text-blue-800 rounded">View Students</a>
                                         <a href="{{ route('attendance.index') }}?stream_id={{ $stream->id }}" class="px-3 py-1 bg-green-600 text-white rounded">Take Attendance</a>
-                                        <a href="{{ route('admin.teachers.assignments.edit', ['teacher' => auth()->user()->teacher, 'highlight_stream' => $stream->id]) }}" class="px-3 py-1 bg-gray-100 border rounded">Edit Assignment</a>
                                     </div>
                                 </div>
                             @endforeach

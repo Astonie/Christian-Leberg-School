@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Term;
 use App\Models\Stream;
+use App\Models\Exam;
 
 class AcademicYear extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -49,6 +51,11 @@ class AcademicYear extends Model
     public function streams()
     {
         return $this->hasMany(Stream::class);
+    }
+
+    public function exams()
+    {
+        return $this->hasMany(Exam::class);
     }
 
     public function scopeActive($query)

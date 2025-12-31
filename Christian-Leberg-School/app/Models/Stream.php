@@ -21,6 +21,7 @@ class Stream extends Model
     protected $fillable = [
         'name',
         'class_id',
+        'academic_year_id',
         'capacity',
         'description',
     ];

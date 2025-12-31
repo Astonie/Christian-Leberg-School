@@ -3,14 +3,22 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
                 <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Exams & Assessments</h2>
-                <p class="text-sm text-gray-600 mt-2">Manage examinations and track student performance</p>
+                <p class="text-sm text-gray-600 mt-2">
+                    @if(auth()->user()->hasRole('teacher'))
+                        View and manage exams for your subjects and classes
+                    @else
+                        Manage examinations and track student performance
+                    @endif
+                </p>
             </div>
-            <a href="{{ route('exams.create') }}" class="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg text-sm font-semibold shadow-md hover:shadow-lg transition-all duration-200">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                </svg>
-                Create Exam
-            </a>
+            @if(!auth()->user()->hasRole('teacher'))
+                <a href="{{ route('exams.create') }}" class="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg text-sm font-semibold shadow-md hover:shadow-lg transition-all duration-200">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Create Exam
+                </a>
+            @endif
         </div>
     </x-slot>
 

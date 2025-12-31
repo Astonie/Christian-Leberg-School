@@ -106,6 +106,10 @@ class PermissionSeeder extends Seeder
             ['name' => 'Edit Settings', 'slug' => 'edit-settings', 'description' => 'Can edit system settings'],
             ['name' => 'Manage School Branding', 'slug' => 'manage-school-branding', 'description' => 'Can manage school logo and branding'],
             
+            // Feature Toggle Management (Super Admin only)
+            ['name' => 'Manage Features', 'slug' => 'manage-features', 'description' => 'Can enable/disable system features'],
+            ['name' => 'View Feature Settings', 'slug' => 'view-feature-settings', 'description' => 'Can view feature toggle settings'],
+            
             // Audit & Logs
             ['name' => 'View Audit Logs', 'slug' => 'view-audit-logs', 'description' => 'Can view system audit logs'],
             ['name' => 'View Diagnostics', 'slug' => 'view-diagnostics', 'description' => 'Can view system diagnostics'],
@@ -130,11 +134,21 @@ class PermissionSeeder extends Seeder
      */
     private function assignPermissionsToRoles(): void
     {
-        // Admin gets all permissions
+        // Super Admin gets ALL permissions
+        $superAdminRole = Role::where('slug', 'super-admin')->first();
+        if ($superAdminRole) {
+            $allPermissions = Permission::all();
+            $superAdminRole->permissions()->sync($allPermissions->pluck('id'));
+            $this->command->info('Assigned all permissions to Super Admin role.');
+        }
+
+        // Admin gets all permissions except super admin features
         $adminRole = Role::where('slug', 'admin')->first();
         if ($adminRole) {
-            $allPermissions = Permission::all();
-            $adminRole->permissions()->sync($allPermissions->pluck('id'));
+            $adminPermissions = Permission::whereNotIn('slug', [
+                'manage-features', // Only super admin can manage feature toggles
+            ])->get();
+            $adminRole->permissions()->sync($adminPermissions->pluck('id'));
             $this->command->info('Assigned all permissions to Admin role.');
         }
 
@@ -298,6 +312,19 @@ class PermissionSeeder extends Seeder
             ])->get();
             $deputyHeadTeacherRole->permissions()->sync($deputyHeadTeacherPermissions->pluck('id'));
             $this->command->info('Assigned permissions to Deputy Head Teacher role.');
+        }
+
+        // Guardian permissions - Can view their child's information
+        $guardianRole = Role::where('slug', 'guardian')->first();
+        if ($guardianRole) {
+            $guardianPermissions = Permission::whereIn('slug', [
+                'view-students',        // View their child's information
+                'view-exam-results',    // View their child's exam results
+                'view-attendance',      // View their child's attendance
+                'generate-reports',     // Generate reports for their child
+            ])->get();
+            $guardianRole->permissions()->sync($guardianPermissions->pluck('id'));
+            $this->command->info('Assigned permissions to Guardian role.');
         }
 
         // Student permissions

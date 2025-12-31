@@ -3,10 +3,15 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
                 <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">{{ $exam->name }}</h2>
-                <p class="text-sm text-gray-600 mt-2">{{ $exam->academicYear->name }} - {{ $exam->term->name }}</p>
+                <p class="text-sm text-gray-600 mt-2">
+                    {{ $exam->academicYear->name }} - {{ $exam->term->name }}
+                    @if(isset($isTeacher) && $isTeacher)
+                        <span class="ml-2 text-blue-600 font-medium">(Showing only your assigned subjects)</span>
+                    @endif
+                </p>
             </div>
             <div class="flex gap-2">
-                @if(auth()->user()->hasRole('admin'))
+                @if(auth()->user()->hasRole(['admin', 'head-teacher', 'deputy-head-teacher']))
                     <a href="{{ route('exams.edit', $exam) }}" class="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white border-2 border-indigo-600 rounded-lg text-sm font-semibold hover:from-indigo-600 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
@@ -243,7 +248,7 @@
                                                 return $stream->students()->wherePivot('academic_year_id', $exam->academic_year_id)->wherePivot('is_active', true)->count();
                                             }) }} students
                                         </div>
-                                        <a href="{{ route('exams.class.report', [$exam, $class]) }}" 
+                                        <a href="{{ route('exams.class-report', [$exam, $class]) }}" 
                                            class="block w-full text-center px-3 py-2 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition-colors">
                                             View Report
                                         </a>

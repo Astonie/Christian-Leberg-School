@@ -146,51 +146,53 @@
 
         <?php if(auth()->user()->hasRole('admin')): ?>
             <!-- CMS Section -->
-            <div class="pt-6 pb-2">
-                <button @click="cmsOpen = !cmsOpen" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-400 hover:text-slate-300 transition-colors duration-200 uppercase tracking-wider">
-                    <div class="flex items-center">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+            <?php if(feature_enabled('website')): ?>
+                <div class="pt-6 pb-2">
+                    <button @click="cmsOpen = !cmsOpen" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-400 hover:text-slate-300 transition-colors duration-200 uppercase tracking-wider">
+                        <div class="flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                            </svg>
+                            <span>Website CMS</span>
+                        </div>
+                        <svg class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': cmsOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
-                        <span>Website CMS</span>
-                    </div>
-                    <svg class="w-4 h-4 transition-transform duration-200" :class="{ 'rotate-180': cmsOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                </button>
-            </div>
-            
-            <div x-show="cmsOpen" x-collapse class="space-y-1">
-                <a href="<?php echo e(route('admin.cms.pages.index')); ?>" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 <?php echo e(request()->routeIs('admin.cms.pages*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600'); ?>">
-                    <div class="w-1.5 h-1.5 rounded-full <?php echo e(request()->routeIs('admin.cms.pages*') ? 'bg-blue-500' : 'bg-slate-600 group-hover:bg-slate-500'); ?> ml-5 mr-3 transition-colors duration-200"></div>
-                    <span class="font-medium text-sm">Pages</span>
-                </a>
+                    </button>
+                </div>
                 
-                <a href="<?php echo e(route('admin.cms.posts.index')); ?>" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 <?php echo e(request()->routeIs('admin.cms.posts*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600'); ?>">
-                    <div class="w-1.5 h-1.5 rounded-full <?php echo e(request()->routeIs('admin.cms.posts*') ? 'bg-blue-500' : 'bg-slate-600 group-hover:bg-slate-500'); ?> ml-5 mr-3 transition-colors duration-200"></div>
-                    <span class="font-medium text-sm">Blog Posts</span>
-                </a>
-                
-                <a href="<?php echo e(route('admin.cms.events.index')); ?>" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 <?php echo e(request()->routeIs('admin.cms.events*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600'); ?>">
-                    <div class="w-1.5 h-1.5 rounded-full <?php echo e(request()->routeIs('admin.cms.events*') ? 'bg-blue-500' : 'bg-slate-600 group-hover:bg-slate-500'); ?> ml-5 mr-3 transition-colors duration-200"></div>
-                    <span class="font-medium text-sm">Events</span>
-                </a>
-                
-                <a href="<?php echo e(route('admin.cms.media.index')); ?>" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 <?php echo e(request()->routeIs('admin.cms.media*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600'); ?>">
-                    <div class="w-1.5 h-1.5 rounded-full <?php echo e(request()->routeIs('admin.cms.media*') ? 'bg-blue-500' : 'bg-slate-600 group-hover:bg-slate-500'); ?> ml-5 mr-3 transition-colors duration-200"></div>
-                    <span class="font-medium text-sm">Media Library</span>
-                </a>
-                
-                <a href="<?php echo e(route('admin.cms.menus.index')); ?>" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 <?php echo e(request()->routeIs('admin.cms.menus*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600'); ?>">
-                    <div class="w-1.5 h-1.5 rounded-full <?php echo e(request()->routeIs('admin.cms.menus*') ? 'bg-blue-500' : 'bg-slate-600 group-hover:bg-slate-500'); ?> ml-5 mr-3 transition-colors duration-200"></div>
-                    <span class="font-medium text-sm">Menus</span>
-                </a>
-                
-                <a href="<?php echo e(route('admin.cms.settings.index')); ?>" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 <?php echo e(request()->routeIs('admin.cms.settings*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600'); ?>">
-                    <div class="w-1.5 h-1.5 rounded-full <?php echo e(request()->routeIs('admin.cms.settings*') ? 'bg-blue-500' : 'bg-slate-600 group-hover:bg-slate-500'); ?> ml-5 mr-3 transition-colors duration-200"></div>
-                    <span class="font-medium text-sm">CMS Settings</span>
-                </a>
-            </div>
+                <div x-show="cmsOpen" x-collapse class="space-y-1">
+                    <a href="<?php echo e(route('admin.cms.pages.index')); ?>" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 <?php echo e(request()->routeIs('admin.cms.pages*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600'); ?>">
+                        <div class="w-1.5 h-1.5 rounded-full <?php echo e(request()->routeIs('admin.cms.pages*') ? 'bg-blue-500' : 'bg-slate-600 group-hover:bg-slate-500'); ?> ml-5 mr-3 transition-colors duration-200"></div>
+                        <span class="font-medium text-sm">Pages</span>
+                    </a>
+                    
+                    <a href="<?php echo e(route('admin.cms.posts.index')); ?>" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 <?php echo e(request()->routeIs('admin.cms.posts*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600'); ?>">
+                        <div class="w-1.5 h-1.5 rounded-full <?php echo e(request()->routeIs('admin.cms.posts*') ? 'bg-blue-500' : 'bg-slate-600 group-hover:bg-slate-500'); ?> ml-5 mr-3 transition-colors duration-200"></div>
+                        <span class="font-medium text-sm">Blog Posts</span>
+                    </a>
+                    
+                    <a href="<?php echo e(route('admin.cms.events.index')); ?>" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 <?php echo e(request()->routeIs('admin.cms.events*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600'); ?>">
+                        <div class="w-1.5 h-1.5 rounded-full <?php echo e(request()->routeIs('admin.cms.events*') ? 'bg-blue-500' : 'bg-slate-600 group-hover:bg-slate-500'); ?> ml-5 mr-3 transition-colors duration-200"></div>
+                        <span class="font-medium text-sm">Events</span>
+                    </a>
+                    
+                    <a href="<?php echo e(route('admin.cms.media.index')); ?>" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 <?php echo e(request()->routeIs('admin.cms.media*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600'); ?>">
+                        <div class="w-1.5 h-1.5 rounded-full <?php echo e(request()->routeIs('admin.cms.media*') ? 'bg-blue-500' : 'bg-slate-600 group-hover:bg-slate-500'); ?> ml-5 mr-3 transition-colors duration-200"></div>
+                        <span class="font-medium text-sm">Media Library</span>
+                    </a>
+                    
+                    <a href="<?php echo e(route('admin.cms.menus.index')); ?>" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 <?php echo e(request()->routeIs('admin.cms.menus*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600'); ?>">
+                        <div class="w-1.5 h-1.5 rounded-full <?php echo e(request()->routeIs('admin.cms.menus*') ? 'bg-blue-500' : 'bg-slate-600 group-hover:bg-slate-500'); ?> ml-5 mr-3 transition-colors duration-200"></div>
+                        <span class="font-medium text-sm">Menus</span>
+                    </a>
+                    
+                    <a href="<?php echo e(route('admin.cms.settings.index')); ?>" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 <?php echo e(request()->routeIs('admin.cms.settings*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600'); ?>">
+                        <div class="w-1.5 h-1.5 rounded-full <?php echo e(request()->routeIs('admin.cms.settings*') ? 'bg-blue-500' : 'bg-slate-600 group-hover:bg-slate-500'); ?> ml-5 mr-3 transition-colors duration-200"></div>
+                        <span class="font-medium text-sm">CMS Settings</span>
+                    </a>
+                </div>
+            <?php endif; ?>
         <?php endif; ?>
 
         <?php if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('head-teacher') || auth()->user()->hasRole('deputy-head-teacher')): ?>
@@ -295,6 +297,21 @@
                 </a>
                 <a href="<?php echo e(route('admin.permissions.index')); ?>" class="group flex items-center px-3 py-2.5 ml-12 rounded-xl transition-all duration-200 <?php echo e(request()->routeIs('admin.permissions*') ? 'text-white' : 'text-slate-400 hover:text-slate-300'); ?>">
                     <span class="text-xs">All Permissions</span>
+                </a>
+            </div>
+        <?php endif; ?>
+
+        <?php if(auth()->user()->isSuperAdmin()): ?>
+            <!-- Feature Management (Super Admin Only) -->
+            <div class="pt-4">
+                <a href="<?php echo e(route('admin.features.index')); ?>" class="group flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 <?php echo e(request()->routeIs('admin.features*') ? 'bg-gradient-to-r from-red-600 to-pink-500 text-white shadow-lg shadow-red-500/30' : 'text-slate-300 hover:bg-slate-800/50 hover:text-white'); ?>">
+                    <div class="flex items-center justify-center w-9 h-9 rounded-lg <?php echo e(request()->routeIs('admin.features*') ? 'bg-white/10' : 'bg-slate-800/50 group-hover:bg-slate-700/50'); ?> transition-all duration-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+                        </svg>
+                    </div>
+                    <span class="ml-3 font-medium text-sm">Feature Management</span>
+                    <span class="ml-auto px-2 py-0.5 text-xs bg-red-600 text-white rounded-full">SUPER ADMIN</span>
                 </a>
             </div>
         <?php endif; ?>

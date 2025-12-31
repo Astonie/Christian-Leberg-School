@@ -24,6 +24,9 @@ class GradingScale extends Model
         'max_score',
         'points',
         'description',
+        'code',
+        'label',
+        'order',
     ];
 
     /**

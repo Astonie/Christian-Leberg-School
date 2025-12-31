@@ -87,6 +87,10 @@ class User extends Authenticatable
 
     public function hasRole($role)
     {
+        if (is_array($role)) {
+            return $this->hasAnyRole($role);
+        }
+        
         if (is_string($role)) {
             return $this->role && $this->role->slug === $role;
         }
@@ -121,6 +125,11 @@ class User extends Authenticatable
         }
 
         return $this->role->permissions()->where('slug', $permission)->exists();
+    }
+
+    public function isSuperAdmin()
+    {
+        return $this->hasRole('super-admin');
     }
 
     public function auditLogs()

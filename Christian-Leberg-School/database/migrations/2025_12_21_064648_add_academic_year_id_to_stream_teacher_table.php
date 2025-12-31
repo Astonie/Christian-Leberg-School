@@ -17,9 +17,10 @@ return new class extends Migration
         });
 
         // Update existing records to use the active academic year or the first available
-        $activeYear = \App\Models\AcademicYear::where('is_active', true)->first();
+        // Query directly from DB to avoid model's SoftDeletes scope issues
+        $activeYear = DB::table('academic_years')->where('is_active', true)->first();
         if (!$activeYear) {
-            $activeYear = \App\Models\AcademicYear::first();
+            $activeYear = DB::table('academic_years')->first();
         }
 
         if ($activeYear) {

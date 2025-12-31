@@ -7,7 +7,7 @@ use App\Http\Controllers\WebsiteController;
 use Illuminate\Support\Facades\Route;
 
 // Public Website Routes - Rate limited to prevent scraping
-Route::middleware('throttle:100,1')->group(function () {
+Route::middleware(['throttle:100,1', 'feature:website'])->group(function () {
     Route::get('/', [WebsiteController::class, 'home'])->name('website.home');
     Route::get('/page/{slug}', [WebsiteController::class, 'page'])->name('website.page');
     Route::get('/blog', [WebsiteController::class, 'blog'])->name('website.blog');
@@ -34,7 +34,7 @@ Route::middleware(['auth', 'throttle:60,1'])->group(function () {
     });
 
     // CMS Admin Routes
-    Route::middleware('role:admin')->prefix('admin/cms')->name('admin.cms.')->group(function () {
+    Route::middleware(['role:admin', 'feature:website'])->prefix('admin/cms')->name('admin.cms.')->group(function () {
         // Pages
         Route::resource('pages', \App\Http\Controllers\Admin\PageController::class);
         
@@ -63,6 +63,14 @@ Route::middleware(['auth', 'throttle:60,1'])->group(function () {
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
         Route::resource('roles', \App\Http\Controllers\Admin\RoleController::class);
         Route::resource('permissions', \App\Http\Controllers\Admin\PermissionController::class);
+    });
+
+    // Feature Toggle Management (Super Admin only)
+    Route::middleware('role:super-admin')->prefix('admin')->name('admin.')->group(function () {
+        Route::get('features', [\App\Http\Controllers\FeatureToggleController::class, 'index'])->name('features.index');
+        Route::patch('features/{id}/toggle', [\App\Http\Controllers\FeatureToggleController::class, 'toggle'])->name('features.toggle');
+        Route::put('features/{id}', [\App\Http\Controllers\FeatureToggleController::class, 'update'])->name('features.update');
+        Route::post('features/bulk-toggle', [\App\Http\Controllers\FeatureToggleController::class, 'bulkToggle'])->name('features.bulk-toggle');
     });
 
         // Exams (Admin/Head/Deputy)
@@ -213,11 +221,11 @@ Route::middleware(['auth', 'throttle:60,1'])->group(function () {
         Route::get('students/import/template', [\App\Http\Controllers\StudentImportController::class, 'downloadTemplate'])->name('students.import.template');
         
         Route::resource('academic-years', \App\Http\Controllers\AcademicYearController::class);
+        Route::post('academic-years/{id}/restore', [\App\Http\Controllers\AcademicYearController::class, 'restore'])->name('academic-years.restore');
         Route::resource('terms', \App\Http\Controllers\TermController::class)->only(['store', 'update', 'destroy']);
         Route::resource('classes', \App\Http\Controllers\SchoolClassController::class)->except(['show']);
         Route::resource('streams', \App\Http\Controllers\StreamController::class)->only(['store', 'update', 'destroy']);
         Route::resource('subjects', \App\Http\Controllers\SubjectController::class);
-        Route::resource('teachers', \App\Http\Controllers\TeacherController::class);
         Route::resource('teachers.subjects', \App\Http\Controllers\TeacherSubjectController::class)->only(['index', 'store', 'destroy']);
         
         // Teacher assignment management: assign streams and subjects per teacher
@@ -230,6 +238,11 @@ Route::middleware(['auth', 'throttle:60,1'])->group(function () {
         Route::put('teachers/{teacher}/assignments', [\App\Http\Controllers\TeacherAssignmentController::class, 'update'])->name('teachers.assignments.update');
         Route::get('teachers/assignments/bulk', [\App\Http\Controllers\TeacherAssignmentController::class, 'bulkAssign'])->name('teachers.assignments.bulk');
         Route::post('teachers/assignments/bulk', [\App\Http\Controllers\TeacherAssignmentController::class, 'storeBulk'])->name('teachers.assignments.bulk.store');
+    });
+
+    // Teacher Management: admin and head-teacher can manage teachers
+    Route::middleware('role:admin|head-teacher')->group(function () {
+        Route::resource('teachers', \App\Http\Controllers\TeacherController::class);
     });
 
     // Allow teachers/head-teacher/deputy-head-teacher to view students (index & show) so they can see their class lists

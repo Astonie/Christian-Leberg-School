@@ -72,7 +72,6 @@ class GuardianSeeder extends Seeder
             if (!$user->guardian) {
                 $relationship = $relationshipTypes[array_rand($relationshipTypes)];
                 $occupation = $occupations[array_rand($occupations)];
-                
                 $guardian = Guardian::create([
                     'user_id' => $user->id,
                     'relationship' => $relationship,

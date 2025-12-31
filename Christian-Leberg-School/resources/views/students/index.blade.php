@@ -2,15 +2,17 @@
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">Students Management</h2>
-            @if(auth()->user()->hasRole('admin'))
+            @if(auth()->user()->hasRole(['admin', 'head-teacher', 'deputy-head-teacher']))
                 <div class="flex flex-wrap items-center gap-2.5">
-                    <a href="{{ route('students.import.index') }}" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
-                        </svg>
-                        <span class="hidden sm:inline">Bulk Import</span>
-                        <span class="sm:hidden">Import</span>
-                    </a>
+                    @if(auth()->user()->hasRole(['admin', 'head-teacher']))
+                        <a href="{{ route('students.import.index') }}" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+                            </svg>
+                            <span class="hidden sm:inline">Bulk Import</span>
+                            <span class="sm:hidden">Import</span>
+                        </a>
+                    @endif
                     <a href="{{ route('students.create') }}" class="inline-flex items-center px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white font-semibold rounded-lg shadow-sm transition-all duration-200">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
