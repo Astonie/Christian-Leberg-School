@@ -32,6 +32,8 @@ class AuthenticatedSessionController extends Controller
 
         if ($user->hasRole('admin')) {
             $path = route('dashboard.admin');
+        } elseif ($user->hasRole('head-teacher') || $user->hasRole('deputy-head-teacher')) {
+            $path = route('dashboard.admin'); // Use admin dashboard for academic managers
         } elseif ($user->hasRole('teacher')) {
             $path = route('dashboard.teacher');
         } elseif ($user->hasRole('student')) {

@@ -2,11 +2,36 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Term extends Model
 {
-    protected $guarded = [];
+    use HasFactory;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<string>
+     */
+    protected $fillable = [
+        'name',
+        'academic_year_id',
+        'start_date',
+        'end_date',
+    ];
+
+    /**
+     * The attributes that are not mass assignable.
+     *
+     * @var array<string>
+     */
+    protected $guarded = [
+        'id',
+        'is_active',
+        'created_at',
+        'updated_at',
+    ];
 
     protected $casts = [
         'start_date' => 'date',

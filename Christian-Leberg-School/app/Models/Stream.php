@@ -6,11 +6,35 @@ use App\Models\AcademicYear;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\Teacher;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Stream extends Model
 {
-    protected $guarded = [];
+    use HasFactory;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<string>
+     */
+    protected $fillable = [
+        'name',
+        'class_id',
+        'capacity',
+        'description',
+    ];
+
+    /**
+     * The attributes that are not mass assignable.
+     *
+     * @var array<string>
+     */
+    protected $guarded = [
+        'id',
+        'created_at',
+        'updated_at',
+    ];
 
     public function schoolClass()
     {

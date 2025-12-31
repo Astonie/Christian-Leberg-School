@@ -2,11 +2,37 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class StudentScore extends Model
 {
-    protected $guarded = [];
+    use HasFactory;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<string>
+     */
+    protected $fillable = [
+        'student_id',
+        'subject_id',
+        'assessment_component_id',
+        'exam_id',
+        'score',
+        'remarks',
+    ];
+
+    /**
+     * The attributes that are not mass assignable.
+     *
+     * @var array<string>
+     */
+    protected $guarded = [
+        'id',
+        'created_at',
+        'updated_at',
+    ];
     
     protected $casts = [
         'score' => 'decimal:2',
@@ -35,6 +61,11 @@ class StudentScore extends Model
     public function term()
     {
         return $this->belongsTo(Term::class);
+    }
+    
+    public function exam()
+    {
+        return $this->belongsTo(Exam::class);
     }
     
     public function enteredBy()

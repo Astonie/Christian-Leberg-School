@@ -5,11 +5,11 @@
     <div class="flex items-center justify-between px-4 sm:px-6 h-16 lg:h-20 bg-slate-950/50 backdrop-blur-sm border-b border-slate-800/50">
         <div class="flex items-center space-x-3">
             <div class="w-9 h-9 lg:w-10 lg:h-10 bg-white rounded-xl flex items-center justify-center shadow-lg p-1.5">
-                <img src="<?php echo e(asset('images/school_logo.png')); ?>" alt="CLSS Logo" class="w-full h-full object-contain">
+                <img src="<?php echo e(asset('images/school_logo.png')); ?>" alt="<?php echo e(setting('site_name', 'School')); ?>" class="w-full h-full object-contain">
             </div>
             <div class="hidden sm:block">
-                <h1 class="text-sm lg:text-base font-bold text-white leading-tight"><?php echo e(config('app.name')); ?></h1>
-                <p class="text-xs text-slate-400 leading-tight">Management System</p>
+                <h1 class="text-sm lg:text-base font-bold text-white leading-tight"><?php echo e(setting('site_name', config('app.name', 'School Portal'))); ?></h1>
+                <p class="text-xs text-slate-400 leading-tight">Portal</p>
             </div>
         </div>
         <!-- Close button for mobile -->
@@ -45,7 +45,7 @@
             </a>
         <?php endif; ?>
 
-        <?php if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('teacher')): ?>
+        <?php if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('head-teacher') || auth()->user()->hasRole('deputy-head-teacher') || auth()->user()->hasRole('teacher')): ?>
             <!-- Students -->
             <a href="<?php echo e(route('students.index')); ?>" class="group flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 <?php echo e(request()->routeIs('students*') ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30' : 'text-slate-300 hover:bg-slate-800/50 hover:text-white'); ?>">
                 <div class="flex items-center justify-center w-9 h-9 rounded-lg <?php echo e(request()->routeIs('students*') ? 'bg-white/10' : 'bg-slate-800/50 group-hover:bg-slate-700/50'); ?> transition-all duration-200">
@@ -55,7 +55,7 @@
                 </div>
                 <span class="ml-3 font-medium text-sm">Students</span>
             </a>
-            <?php if(auth()->user()->hasRole('admin')): ?>
+            <?php if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('head-teacher') || auth()->user()->hasRole('deputy-head-teacher') || auth()->user()->hasRole('head-teacher') || auth()->user()->hasRole('deputy-head-teacher')): ?>
                 <!-- Teachers -->
                 <a href="<?php echo e(route('teachers.index')); ?>" class="group flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 <?php echo e(request()->routeIs('teachers*') ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30' : 'text-slate-300 hover:bg-slate-800/50 hover:text-white'); ?>">
                     <div class="flex items-center justify-center w-9 h-9 rounded-lg <?php echo e(request()->routeIs('teachers*') ? 'bg-white/10' : 'bg-slate-800/50 group-hover:bg-slate-700/50'); ?> transition-all duration-200">
@@ -93,6 +93,14 @@
                     </div>
                     <span class="ml-3 font-medium text-sm">My Streams</span>
                 </a>
+                <a href="<?php echo e(route('teacher-assessments.index')); ?>" class="group flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 <?php echo e(request()->routeIs('teacher-assessments*') ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30' : 'text-slate-300 hover:bg-slate-800/50 hover:text-white'); ?>">
+                    <div class="flex items-center justify-center w-9 h-9 rounded-lg <?php echo e(request()->routeIs('teacher-assessments*') ? 'bg-white/10' : 'bg-slate-800/50 group-hover:bg-slate-700/50'); ?> transition-all duration-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <span class="ml-3 font-medium text-sm">My Assessments</span>
+                </a>
                 <a href="<?php echo e(route('timetables.index')); ?>" class="group flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 <?php echo e(request()->routeIs('timetables*') ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30' : 'text-slate-300 hover:bg-slate-800/50 hover:text-white'); ?>">
                     <div class="flex items-center justify-center w-9 h-9 rounded-lg <?php echo e(request()->routeIs('timetables*') ? 'bg-white/10' : 'bg-slate-800/50 group-hover:bg-slate-700/50'); ?> transition-all duration-200">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,7 +112,7 @@
             <?php endif; ?>
             
             <!-- Attendance -->
-            <?php if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('teacher')): ?>
+            <?php if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('head-teacher') || auth()->user()->hasRole('deputy-head-teacher') || auth()->user()->hasRole('teacher')): ?>
                 <a href="<?php echo e(route('attendance.index')); ?>" class="group flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 <?php echo e(request()->routeIs('attendance.index') || request()->routeIs('attendance.create') || request()->routeIs('attendance.store') ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30' : 'text-slate-300 hover:bg-slate-800/50 hover:text-white'); ?>">
                     <div class="flex items-center justify-center w-9 h-9 rounded-lg <?php echo e(request()->routeIs('attendance.index') || request()->routeIs('attendance.create') || request()->routeIs('attendance.store') ? 'bg-white/10' : 'bg-slate-800/50 group-hover:bg-slate-700/50'); ?> transition-all duration-200">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -183,7 +191,9 @@
                     <span class="font-medium text-sm">CMS Settings</span>
                 </a>
             </div>
+        <?php endif; ?>
 
+        <?php if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('head-teacher') || auth()->user()->hasRole('deputy-head-teacher')): ?>
             <!-- Academic Section -->
             <div class="pt-6 pb-2">
                 <button @click="academicOpen = !academicOpen" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-400 hover:text-slate-300 transition-colors duration-200 uppercase tracking-wider">
@@ -218,11 +228,6 @@
                 <a href="<?php echo e(route('timetables.index')); ?>" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 <?php echo e(request()->routeIs('timetables*') || request()->routeIs('timetable-periods*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600'); ?>">
                     <div class="w-1.5 h-1.5 rounded-full <?php echo e(request()->routeIs('timetables*') || request()->routeIs('timetable-periods*') ? 'bg-blue-500' : 'bg-slate-600 group-hover:bg-slate-500'); ?> ml-5 mr-3 transition-colors duration-200"></div>
                     <span class="font-medium text-sm">Timetable</span>
-                </a>
-                
-                <a href="<?php echo e(route('classes.index')); ?>" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 <?php echo e(request()->routeIs('classes*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600'); ?>">
-                    <div class="w-1.5 h-1.5 rounded-full <?php echo e(request()->routeIs('classes*') ? 'bg-blue-500' : 'bg-slate-600 group-hover:bg-slate-500'); ?> ml-5 mr-3 transition-colors duration-200"></div>
-                    <span class="font-medium text-sm">Classes & Streams</span>
                 </a>
                 
                 <a href="<?php echo e(route('exams.index')); ?>" class="group flex items-center px-3 py-2 rounded-xl transition-all duration-200 <?php echo e(request()->routeIs('exams*') ? 'bg-slate-800/70 text-white border-l-2 border-blue-500' : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-300 hover:border-l-2 hover:border-slate-600'); ?>">
@@ -262,7 +267,9 @@
                     <span class="font-medium text-sm">Assessment Structures</span>
                 </a>
             </div>
+        <?php endif; ?>
 
+        <?php if(auth()->user()->hasRole('admin')): ?>
             <!-- School Settings -->
             <div class="pt-4">
                 <a href="<?php echo e(route('admin.settings.school.edit')); ?>" class="group flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 <?php echo e(request()->routeIs('admin.settings.school*') ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/30' : 'text-slate-300 hover:bg-slate-800/50 hover:text-white'); ?>">

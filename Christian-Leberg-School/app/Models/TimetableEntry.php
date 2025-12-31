@@ -6,7 +6,33 @@ use Illuminate\Database\Eloquent\Model;
 
 class TimetableEntry extends Model
 {
-    protected $guarded = [];
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<string>
+     */
+    protected $fillable = [
+        'academic_year_id',
+        'term_id',
+        'class_id',
+        'stream_id',
+        'subject_id',
+        'teacher_id',
+        'period_id',
+        'day_of_week',
+        'room',
+    ];
+
+    /**
+     * The attributes that are not mass assignable.
+     *
+     * @var array<string>
+     */
+    protected $guarded = [
+        'id',
+        'created_at',
+        'updated_at',
+    ];
 
     protected $casts = [
         'day_of_week' => 'string',

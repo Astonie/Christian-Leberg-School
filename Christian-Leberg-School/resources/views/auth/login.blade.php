@@ -2,7 +2,7 @@
     <!-- Header -->
     <div class="text-center mb-8">
         <h2 class="text-3xl font-bold text-slate-900 mb-2">Welcome Back</h2>
-        <p class="text-slate-600">Log in to access the Christian Liebig Secondary School Portal</p>
+        <p class="text-slate-600">Log in to access the {{ setting('site_name', 'School') }} Portal</p>
     </div>
 
     <!-- Session Status -->

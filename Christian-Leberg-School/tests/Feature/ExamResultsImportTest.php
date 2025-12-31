@@ -29,7 +29,8 @@ class ExamResultsImportTest extends TestCase
         $class = SchoolClass::create(['name' => 'Grade 1', 'level' => 1]);
         $stream = Stream::create(['name' => 'A', 'class_id' => $class->id, 'academic_year_id' => $year->id]);
         $subject = Subject::create(['name' => 'Mathematics', 'code' => 'MATH']);
-        $exam = Exam::create(['name' => 'Midterm', 'academic_year_id' => $year->id, 'term' => 'Term 1', 'start_date' => now(), 'end_date' => now()->addWeek()]);
+        $term = \App\Models\Term::create(['name' => 'Term 1', 'academic_year_id' => $year->id, 'start_date' => now()->subMonths(2), 'end_date' => now()->addMonth(), 'is_active' => true]);
+        $exam = Exam::create(['name' => 'Midterm', 'academic_year_id' => $year->id, 'term_id' => $term->id, 'start_date' => now(), 'end_date' => now()->addWeek()]);
 
         // Create a student and attach to stream
         $stuUser = User::factory()->create();
@@ -65,7 +66,8 @@ class ExamResultsImportTest extends TestCase
         $class = SchoolClass::create(['name' => 'Grade 1', 'level' => 1]);
         $stream = Stream::create(['name' => 'A', 'class_id' => $class->id, 'academic_year_id' => $year->id]);
         $subject = Subject::create(['name' => 'Mathematics', 'code' => 'MATH']);
-        $exam = Exam::create(['name' => 'Midterm', 'academic_year_id' => $year->id, 'term' => 'Term 1', 'start_date' => now(), 'end_date' => now()->addWeek()]);
+        $term = \App\Models\Term::where('academic_year_id', $year->id)->first() ?? \App\Models\Term::create(['name' => 'Term 1', 'academic_year_id' => $year->id, 'start_date' => now()->subMonths(2), 'end_date' => now()->addMonth(), 'is_active' => true]);
+        $exam = Exam::create(['name' => 'Midterm', 'academic_year_id' => $year->id, 'term_id' => $term->id, 'start_date' => now(), 'end_date' => now()->addWeek()]);
 
         $stuUser = User::factory()->create();
         $student = Student::create(['user_id' => $stuUser->id, 'admission_number' => 'A001', 'admission_date' => now(), 'date_of_birth' => now()->subYears(10), 'gender' => 'male']);

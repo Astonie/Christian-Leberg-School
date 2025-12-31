@@ -2,13 +2,38 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Term;
 use App\Models\Stream;
 
 class AcademicYear extends Model
 {
-    protected $guarded = [];
+    use HasFactory;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<string>
+     */
+    protected $fillable = [
+        'name',
+        'start_date',
+        'end_date',
+    ];
+
+    /**
+     * The attributes that are not mass assignable.
+     * Prevents unauthorized activation of academic years.
+     *
+     * @var array<string>
+     */
+    protected $guarded = [
+        'id',
+        'is_active',
+        'created_at',
+        'updated_at',
+    ];
 
     protected $casts = [
         'start_date' => 'date',

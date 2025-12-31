@@ -64,6 +64,7 @@ class ScoreEntryTest extends TestCase
             'stream_id' => $stream->id,
             'teacher_id' => $teacher->teacher->id,
             'subject_id' => $subject->id,
+            'academic_year_id' => $year->id,
         ], [
             'is_class_teacher' => true,
             'created_at' => now(), 'updated_at' => now(),
@@ -103,6 +104,7 @@ class ScoreEntryTest extends TestCase
             'stream_id' => $stream->id,
             'teacher_id' => $otherTeacherUser->teacher->id,
             'subject_id' => $subject->id,
+            'academic_year_id' => $year->id,
         ], [
             'is_class_teacher' => false,
             'created_at' => now(), 'updated_at' => now(),

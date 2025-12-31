@@ -242,7 +242,7 @@
                                     </svg>
                                     <div>
                                         <p class="text-sm text-purple-100">Address</p>
-                                        <p class="font-semibold text-sm">Christian Leberg School<br>Nairobi, Kenya</p>
+                                        <p class="font-semibold text-sm">{{ setting('site_name', 'School') }}<br>{{ setting('contact_address', 'School Address') }}</p>
                                     </div>
                                 </div>
                             </div>

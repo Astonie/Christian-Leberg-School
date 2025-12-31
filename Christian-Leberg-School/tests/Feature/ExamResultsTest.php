@@ -21,8 +21,9 @@ class ExamResultsTest extends TestCase
         $admin = User::factory()->create(['role_id' => Role::where('slug', 'admin')->first()->id]);
 
         $year = AcademicYear::create(['name' => '2025', 'start_date' => '2025-01-01', 'end_date' => '2025-12-31', 'is_active' => true]);
+        $term = \App\Models\Term::create(['name' => 'Term 1', 'academic_year_id' => $year->id, 'start_date' => '2025-01-01', 'end_date' => '2025-04-30', 'is_active' => true]);
 
-        $exam = Exam::create(['academic_year_id' => $year->id, 'name' => 'Test Exam', 'term' => 'Term 1', 'start_date' => '2025-06-01', 'end_date' => '2025-06-02']);
+        $exam = Exam::create(['academic_year_id' => $year->id, 'term_id' => $term->id, 'name' => 'Test Exam', 'start_date' => '2025-06-01', 'end_date' => '2025-06-02']);
 
         $response = $this->actingAs($admin)->get(route('exams.results.create', $exam));
 
@@ -36,8 +37,9 @@ class ExamResultsTest extends TestCase
         $admin = User::factory()->create(['role_id' => Role::where('slug', 'admin')->first()->id]);
 
         $year = AcademicYear::create(['name' => '2025', 'start_date' => '2025-01-01', 'end_date' => '2025-12-31', 'is_active' => true]);
+        $term = \App\Models\Term::where('academic_year_id', $year->id)->first() ?? \App\Models\Term::create(['name' => 'Term 1', 'academic_year_id' => $year->id, 'start_date' => '2025-01-01', 'end_date' => '2025-04-30', 'is_active' => true]);
 
-        $exam = Exam::create(['academic_year_id' => $year->id, 'name' => 'Test Exam', 'term' => 'Term 1', 'start_date' => '2025-06-01', 'end_date' => '2025-06-02']);
+        $exam = Exam::create(['academic_year_id' => $year->id, 'term_id' => $term->id, 'name' => 'Test Exam', 'start_date' => '2025-06-01', 'end_date' => '2025-06-02']);
 
         $user = User::factory()->create(['role_id' => Role::where('slug', 'student')->first()->id ?? Role::create(['name'=>'Student','slug'=>'student'])->id]);
         $student = Student::create(['user_id' => $user->id, 'admission_number' => 'ADM100', 'admission_date' => now(), 'date_of_birth' => now()->subYears(12), 'gender' => 'male']);
@@ -66,8 +68,9 @@ class ExamResultsTest extends TestCase
         $admin = User::factory()->create(['role_id' => Role::where('slug', 'admin')->first()->id]);
 
         $year = AcademicYear::create(['name' => '2025', 'start_date' => '2025-01-01', 'end_date' => '2025-12-31', 'is_active' => true]);
+        $term = \App\Models\Term::where('academic_year_id', $year->id)->first() ?? \App\Models\Term::create(['name' => 'Term 1', 'academic_year_id' => $year->id, 'start_date' => '2025-01-01', 'end_date' => '2025-04-30', 'is_active' => true]);
 
-        $exam = Exam::create(['academic_year_id' => $year->id, 'name' => 'Test Exam 2', 'term' => 'Term 1', 'start_date' => '2025-06-01', 'end_date' => '2025-06-02']);
+        $exam = Exam::create(['academic_year_id' => $year->id, 'term_id' => $term->id, 'name' => 'Test Exam 2', 'start_date' => '2025-06-01', 'end_date' => '2025-06-02']);
 
         $user = User::factory()->create(['role_id' => Role::where('slug', 'student')->first()->id ?? Role::create(['name'=>'Student','slug'=>'student'])->id]);
         $student = Student::create(['user_id' => $user->id, 'admission_number' => 'ADM101', 'admission_date' => now(), 'date_of_birth' => now()->subYears(12), 'gender' => 'male']);
@@ -91,7 +94,8 @@ class ExamResultsTest extends TestCase
         $admin = User::factory()->create(['role_id' => Role::where('slug', 'admin')->first()->id]);
 
         $year = AcademicYear::create(['name' => '2025', 'start_date' => '2025-01-01', 'end_date' => '2025-12-31', 'is_active' => true]);
-        $exam = Exam::create(['academic_year_id' => $year->id, 'name' => 'Full Exam', 'term' => 'Term 1', 'start_date' => '2025-06-01', 'end_date' => '2025-06-02']);
+        $term = \App\Models\Term::where('academic_year_id', $year->id)->first() ?? \App\Models\Term::create(['name' => 'Term 1', 'academic_year_id' => $year->id, 'start_date' => '2025-01-01', 'end_date' => '2025-04-30', 'is_active' => true]);
+        $exam = Exam::create(['academic_year_id' => $year->id, 'term_id' => $term->id, 'name' => 'Full Exam', 'start_date' => '2025-06-01', 'end_date' => '2025-06-02']);
 
         // Create two students: one complete (4 subjects), one incomplete (2 subjects)
         $subj1 = \App\Models\Subject::create(['name' => 'S1', 'code' => 'S1']);
@@ -134,7 +138,8 @@ class ExamResultsTest extends TestCase
         $admin = User::factory()->create(['role_id' => Role::where('slug', 'admin')->first()->id]);
 
         $year = AcademicYear::create(['name' => '2025', 'start_date' => '2025-01-01', 'end_date' => '2025-12-31', 'is_active' => true]);
-        $exam = Exam::create(['academic_year_id' => $year->id, 'name' => 'Class Exam', 'term' => 'Term 1', 'start_date' => '2025-06-01', 'end_date' => '2025-06-02']);
+        $term = \App\Models\Term::where('academic_year_id', $year->id)->first() ?? \App\Models\Term::create(['name' => 'Term 1', 'academic_year_id' => $year->id, 'start_date' => '2025-01-01', 'end_date' => '2025-04-30', 'is_active' => true]);
+        $exam = Exam::create(['academic_year_id' => $year->id, 'term_id' => $term->id, 'name' => 'Class Exam', 'start_date' => '2025-06-01', 'end_date' => '2025-06-02']);
 
         $class = \App\Models\SchoolClass::create(['name' => 'Grade For PDF', 'level' => 1]);
         $stream = \App\Models\Stream::create(['name' => 'A', 'class_id' => $class->id, 'academic_year_id' => $year->id]);

@@ -6,28 +6,30 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\WebsiteController;
 use Illuminate\Support\Facades\Route;
 
-// Public Website Routes
-Route::get('/', [WebsiteController::class, 'home'])->name('website.home');
-Route::get('/page/{slug}', [WebsiteController::class, 'page'])->name('website.page');
-Route::get('/blog', [WebsiteController::class, 'blog'])->name('website.blog');
-Route::get('/blog/{slug}', [WebsiteController::class, 'blogPost'])->name('website.blog.show');
-Route::get('/events', [WebsiteController::class, 'events'])->name('website.events');
-Route::get('/events/{slug}', [WebsiteController::class, 'event'])->name('website.events.show');
-Route::get('/search', [WebsiteController::class, 'search'])->name('website.search');
+// Public Website Routes - Rate limited to prevent scraping
+Route::middleware('throttle:100,1')->group(function () {
+    Route::get('/', [WebsiteController::class, 'home'])->name('website.home');
+    Route::get('/page/{slug}', [WebsiteController::class, 'page'])->name('website.page');
+    Route::get('/blog', [WebsiteController::class, 'blog'])->name('website.blog');
+    Route::get('/blog/{slug}', [WebsiteController::class, 'blogPost'])->name('website.blog.show');
+    Route::get('/events', [WebsiteController::class, 'events'])->name('website.events');
+    Route::get('/events/{slug}', [WebsiteController::class, 'event'])->name('website.events.show');
+    Route::get('/search', [WebsiteController::class, 'search'])->name('website.search');
+});
 
 // Authentication routes (Laravel's auth scaffolding)
 require __DIR__.'/auth.php';
 
-// Role-based Dashboards
-Route::middleware(['auth'])->group(function () {
+// Role-based Dashboards - General rate limiting for authenticated users
+Route::middleware(['auth', 'throttle:60,1'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
-    // Admin Routes
-    Route::middleware('role:admin')->prefix('admin')->name('dashboard.admin')->group(function () {
+    // Admin Routes (Admin, Head Teacher, Deputy Head Teacher)
+    Route::middleware('role:admin|head-teacher|deputy-head-teacher')->prefix('admin')->name('dashboard.admin')->group(function () {
         Route::get('/', [DashboardController::class, 'admin']);
     });
 
@@ -57,63 +59,86 @@ Route::middleware(['auth'])->group(function () {
         Route::post('settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
     });
 
-        // Exams (Admin)
-        Route::middleware('role:admin')->group(function () {
+    // Roles & Permissions Management (Admin only)
+    Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
+        Route::resource('roles', \App\Http\Controllers\Admin\RoleController::class);
+        Route::resource('permissions', \App\Http\Controllers\Admin\PermissionController::class);
+    });
+
+        // Exams (Admin/Head/Deputy)
+        Route::middleware('role:admin|head-teacher|deputy-head-teacher')->group(function () {
             Route::resource('exams', \App\Http\Controllers\ExamController::class)->except(['show']);
             Route::post('exams/{id}/restore', [\App\Http\Controllers\ExamController::class, 'restore'])->name('exams.restore');
             Route::get('exams/{exam}/report', [\App\Http\Controllers\ExamController::class, 'report'])->name('exams.report');
             Route::get('exams/{exam}/component-breakdown', [\App\Http\Controllers\ExamController::class, 'componentBreakdown'])->name('exams.component_breakdown');
-            Route::get('exams/{exam}/classes/{class}/report', [\App\Http\Controllers\ExamController::class, 'classReport'])->name('exams.class.report');
+            Route::get('exams/{exam}/classes/{class}/report', [\App\Http\Controllers\ExamController::class, 'classReport'])->name('exams.class-report');
             Route::get('exams/{exam}/classes/{class}/report/pdf', [\App\Http\Controllers\ExamController::class, 'classReportPdf'])->name('exams.report.pdf');
+            Route::get('exams/{exam}/students/{student}/report', [\App\Http\Controllers\ExamController::class, 'studentReport'])->name('exams.student-report');
+            Route::get('exams/{exam}/students/{student}/report/pdf', [\App\Http\Controllers\ExamController::class, 'studentReportPdf'])->name('exams.student-report.pdf');
             
             // Result access control
             Route::post('exams/{exam}/release-results', [\App\Http\Controllers\ExamController::class, 'releaseResults'])->name('exams.release_results');
             Route::post('exams/{exam}/withdraw-results', [\App\Http\Controllers\ExamController::class, 'withdrawResults'])->name('exams.withdraw_results');
             Route::post('exams/{exam}/manage-student-access', [\App\Http\Controllers\ExamController::class, 'manageStudentAccess'])->name('exams.manage_student_access');
             
-            // Assessment Structures (Admin only)
+            // Assessment Structures
             Route::resource('assessment-structures', \App\Http\Controllers\AssessmentStructureController::class);
             
-            // Timetable management (Admin only - create/edit/delete)
+            // Timetable management (create/edit/delete)
             Route::resource('timetable-periods', \App\Http\Controllers\TimetablePeriodController::class);
             Route::resource('timetables', \App\Http\Controllers\TimetableController::class)->except(['index']);
             Route::post('timetables/bulk', [\App\Http\Controllers\TimetableController::class, 'bulkStore'])->name('timetables.bulk_store');
         });
 
-    // Timetable viewing (Admin and Teachers)
-    Route::middleware('role:admin|teacher')->group(function () {
+    // Timetable viewing (Admin, Head, Deputy, and Teachers)
+    Route::middleware('role:admin|head-teacher|deputy-head-teacher|teacher')->group(function () {
         Route::get('timetables', [\App\Http\Controllers\TimetableController::class, 'index'])->name('timetables.index');
     });
 
-    // Exams show - Accessible by Admin and Teachers
-    Route::middleware('role:admin|teacher')->group(function () {
+    // Exams show - Accessible by Admin, Head, Deputy, and Teachers
+    Route::middleware('role:admin|head-teacher|deputy-head-teacher|teacher')->group(function () {
         Route::get('exams/{exam}', [\App\Http\Controllers\ExamController::class, 'show'])->name('exams.show');
     });
 
-    // Exam Results - Accessible by Admin and Teachers (controller handles specific authorization)
+    // Exam Results - Accessible by Admin, Head, Deputy, and Teachers (controller handles specific authorization)
     Route::middleware(['auth'])->group(function () {
-        Route::get('exams/{exam}/results/create', [\App\Http\Controllers\ExamResultController::class, 'create'])->name('exams.results.create')->middleware('role:admin|teacher');
-        Route::post('exams/{exam}/results', [\App\Http\Controllers\ExamResultController::class, 'store'])->name('exams.results.store')->middleware('role:admin|teacher');
-        Route::get('exams/{exam}/results', [\App\Http\Controllers\ExamResultController::class, 'index'])->name('exams.results.index')->middleware('role:admin|teacher');
+        Route::get('exams/{exam}/results/create', [\App\Http\Controllers\ExamResultController::class, 'create'])->name('exams.results.create')->middleware('role:admin|head-teacher|deputy-head-teacher|teacher');
+        Route::post('exams/{exam}/results', [\App\Http\Controllers\ExamResultController::class, 'store'])->name('exams.results.store')->middleware('role:admin|head-teacher|deputy-head-teacher|teacher');
+        Route::get('exams/{exam}/results', [\App\Http\Controllers\ExamResultController::class, 'index'])->name('exams.results.index')->middleware('role:admin|head-teacher|deputy-head-teacher|teacher');
+        
+        // Component-based mark entry
+        Route::get('exams/{exam}/results/create-components', [\App\Http\Controllers\ExamResultController::class, 'createWithComponents'])->name('exams.results.create-components')->middleware('role:admin|head-teacher|deputy-head-teacher|teacher');
+        Route::post('exams/{exam}/results/components', [\App\Http\Controllers\ExamResultController::class, 'storeComponents'])->name('exams.results.store-components')->middleware('role:admin|head-teacher|deputy-head-teacher|teacher');
     });
 
     // Allow authorized users (admin/teacher/student owner) to update individual exam results via controller checks
     Route::put('exam-results/{examResult}', [\App\Http\Controllers\ExamResultController::class, 'update'])->name('exam-results.update');
 
+    // Teacher-Created Assessments (Tests, Quizzes, Assignments, etc.)
+    Route::middleware('role:teacher')->prefix('teacher-assessments')->name('teacher-assessments.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\TeacherAssessmentController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\TeacherAssessmentController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\TeacherAssessmentController::class, 'store'])->name('store');
+        Route::get('/{assessment}', [\App\Http\Controllers\TeacherAssessmentController::class, 'show'])->name('show');
+        Route::get('/{assessment}/edit', [\App\Http\Controllers\TeacherAssessmentController::class, 'edit'])->name('edit');
+        Route::put('/{assessment}', [\App\Http\Controllers\TeacherAssessmentController::class, 'update'])->name('update');
+        Route::delete('/{assessment}', [\App\Http\Controllers\TeacherAssessmentController::class, 'destroy'])->name('destroy');
+    });
+
     // Component-based Scores Entry
-    Route::middleware('role:admin|teacher')->group(function () {
+    Route::middleware('role:admin|head-teacher|deputy-head-teacher|teacher')->group(function () {
         Route::get('student-scores/create', [\App\Http\Controllers\StudentScoreController::class, 'create'])->name('student-scores.create');
         Route::post('student-scores', [\App\Http\Controllers\StudentScoreController::class, 'store'])->name('student-scores.store');
     });
 
     // Exam Results Grid Entry (Simplified marks entry interface)
-    Route::middleware('role:admin|teacher')->group(function () {
+    Route::middleware('role:admin|head-teacher|deputy-head-teacher|teacher')->group(function () {
         Route::get('exam-results/entry', [\App\Http\Controllers\ExamResultController::class, 'entry'])->name('exam-results.entry');
         Route::post('exam-results/entry', [\App\Http\Controllers\ExamResultController::class, 'storeEntry'])->name('exam-results.entry.store');
     });
 
     // Bulk Marks Import/Export
-    Route::middleware('role:admin|teacher')->group(function () {
+    Route::middleware('role:admin|head-teacher|deputy-head-teacher|teacher')->group(function () {
         Route::get('exam-marks/import', [\App\Http\Controllers\ExamMarksImportController::class, 'index'])->name('exam-marks.import');
         Route::get('exam-marks/template', [\App\Http\Controllers\ExamMarksImportController::class, 'downloadTemplate'])->name('exam-marks.template');
         Route::post('exam-marks/preview', [\App\Http\Controllers\ExamMarksImportController::class, 'preview'])->name('exam-marks.preview');
@@ -172,16 +197,16 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [DashboardController::class, 'guardian']);
     });
 
-    // Student Management: admin-only resources (create/update/delete), teachers can view
-    Route::middleware('role:admin')->group(function () {
+    // Student Management: admin/head-teacher/deputy-head-teacher can manage, teachers can view
+    Route::middleware('role:admin|head-teacher|deputy-head-teacher')->group(function () {
         Route::resource('users', \App\Http\Controllers\UserController::class)->except(['show', 'create', 'store']); 
         Route::resource('guardians', \App\Http\Controllers\GuardianController::class);
-        // Admin manages students fully except index/show which teachers need access to
+        // Admin/Head/Deputy manages students fully except index/show which teachers need access to
         Route::resource('students', \App\Http\Controllers\StudentController::class)->except(['index','show']);
         // Add guardian to student
         Route::post('students/{student}/guardians', [\App\Http\Controllers\StudentController::class, 'storeGuardian'])->name('students.guardians.store');
         
-        // Student Bulk Import Routes (Admin only)
+        // Student Bulk Import Routes
         Route::get('students/import', [\App\Http\Controllers\StudentImportController::class, 'index'])->name('students.import.index');
         Route::match(['get', 'post'], 'students/import/preview', [\App\Http\Controllers\StudentImportController::class, 'preview'])->name('students.import.preview');
         Route::post('students/import/process', [\App\Http\Controllers\StudentImportController::class, 'import'])->name('students.import.process');
@@ -195,7 +220,7 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('teachers', \App\Http\Controllers\TeacherController::class);
         Route::resource('teachers.subjects', \App\Http\Controllers\TeacherSubjectController::class)->only(['index', 'store', 'destroy']);
         
-        // Teacher assignment management: assign streams and subjects per teacher (admin)
+        // Teacher assignment management: assign streams and subjects per teacher
         Route::get('admin/teachers/{teacher}/assignments', [\App\Http\Controllers\Admin\TeacherAssignmentController::class, 'edit'])->name('admin.teachers.assignments.edit');
         Route::post('admin/teachers/{teacher}/assignments', [\App\Http\Controllers\Admin\TeacherAssignmentController::class, 'update'])->name('admin.teachers.assignments.update');
         
@@ -207,22 +232,15 @@ Route::middleware(['auth'])->group(function () {
         Route::post('teachers/assignments/bulk', [\App\Http\Controllers\TeacherAssignmentController::class, 'storeBulk'])->name('teachers.assignments.bulk.store');
     });
 
-    // Allow teachers to view students (index & show) so they can see their class lists
-    Route::middleware('role:admin|teacher')->group(function () {
+    // Allow teachers/head-teacher/deputy-head-teacher to view students (index & show) so they can see their class lists
+    Route::middleware('role:admin|head-teacher|deputy-head-teacher|teacher')->group(function () {
         Route::resource('students', \App\Http\Controllers\StudentController::class)->only(['index', 'show']);
         // Allow teachers (and admins) to view class pages; controller enforces teacher-scoped access
         Route::resource('classes', \App\Http\Controllers\SchoolClassController::class)->only(['show']);
     });
 
-    // Admin settings: school branding
-    Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
-        // Roles and Permissions Management
-        Route::resource('roles', \App\Http\Controllers\Admin\RoleController::class);
-        Route::resource('permissions', \App\Http\Controllers\Admin\PermissionController::class);
-        
-        Route::get('settings/school', [\App\Http\Controllers\Admin\SchoolSettingsController::class, 'edit'])->name('settings.school.edit');
-        Route::post('settings/school/logo', [\App\Http\Controllers\Admin\SchoolSettingsController::class, 'updateLogo'])->name('settings.school.logo');
-        Route::post('settings/school/logo/delete', [\App\Http\Controllers\Admin\SchoolSettingsController::class, 'deleteLogo'])->name('settings.school.logo.delete');
+    // Academic Records Management (Admin, Head Teacher, Deputy Head Teacher)
+    Route::middleware('role:admin|head-teacher|deputy-head-teacher')->prefix('admin')->name('admin.')->group(function () {
         // Grading systems and scales management
         Route::get('grading-scales', [\App\Http\Controllers\Admin\GradingScaleController::class, 'index'])->name('grading_scales.index');
         Route::post('grading-scales', [\App\Http\Controllers\Admin\GradingScaleController::class, 'store'])->name('grading_scales.store');
@@ -238,19 +256,28 @@ Route::middleware(['auth'])->group(function () {
 
         // Assessment structures
         Route::get('assessment-structures', [\App\Http\Controllers\Admin\AssessmentStructureController::class, 'index'])->name('assessment_structures.index');
+    });
+
+    // Admin settings: school branding (Admin only)
+    Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
+        // Roles and Permissions Management
+        Route::resource('roles', \App\Http\Controllers\Admin\RoleController::class);
+        Route::resource('permissions', \App\Http\Controllers\Admin\PermissionController::class);
+        
+        Route::get('settings/school', [\App\Http\Controllers\Admin\SchoolSettingsController::class, 'edit'])->name('settings.school.edit');
+        Route::post('settings/school/logo', [\App\Http\Controllers\Admin\SchoolSettingsController::class, 'updateLogo'])->name('settings.school.logo');
+        Route::post('settings/school/logo/delete', [\App\Http\Controllers\Admin\SchoolSettingsController::class, 'deleteLogo'])->name('settings.school.logo.delete');
 
         // Diagnostics: admin-only log viewer
         Route::get('diagnostics', [\App\Http\Controllers\Admin\DiagnosticsController::class, 'index'])->name('diagnostics.index');
         Route::post('diagnostics/download', [\App\Http\Controllers\Admin\DiagnosticsController::class, 'download'])->name('diagnostics.download');
     });
 
-    // Student exam report routes (not limited to admin); controller authorizes appropriately
+    // Student exam report routes (accessible by authorized users via controller)
     Route::get('exams/{exam}/students/{student}/report-card', [\App\Http\Controllers\ExamController::class, 'reportCard'])->name('exams.student.report_card');
-    Route::get('exams/{exam}/students/{student}/report', [\App\Http\Controllers\ExamController::class, 'studentReport'])->name('exams.student.report');
-    Route::get('exams/{exam}/students/{student}/report/pdf', [\App\Http\Controllers\ExamController::class, 'studentReportPdf'])->name('exams.student.report.pdf');
 
-    // Attendance Routes (Accessible by Admin and Teachers)
-    Route::middleware('role:admin|teacher')->group(function () {
+    // Attendance Routes (Accessible by Admin, Head, Deputy, and Teachers)
+    Route::middleware('role:admin|head-teacher|deputy-head-teacher|teacher')->group(function () {
         Route::get('attendance/mark', [\App\Http\Controllers\AttendanceController::class, 'create'])->name('attendance.create'); 
         Route::resource('attendance', \App\Http\Controllers\AttendanceController::class)->except(['create', 'show', 'edit', 'update', 'destroy']);
         Route::get('attendance/reports', [\App\Http\Controllers\AttendanceController::class, 'reports'])->name('attendance.reports');

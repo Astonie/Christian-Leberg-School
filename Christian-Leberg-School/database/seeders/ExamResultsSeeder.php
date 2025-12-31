@@ -24,11 +24,24 @@ class ExamResultsSeeder extends Seeder
             ]);
         }
 
+        // Get a term for the exam
+        $term = $year->terms()->where('is_active', true)->first() ?? $year->terms()->first();
+        
+        if (!$term) {
+            $term = \App\Models\Term::create([
+                'academic_year_id' => $year->id,
+                'name' => 'Term 1',
+                'start_date' => $year->start_date,
+                'end_date' => now()->addMonths(4)->toDateString(),
+                'is_active' => true,
+            ]);
+        }
+
         $exam = Exam::firstOrCreate(
             [
                 'academic_year_id' => $year->id,
                 'name' => 'End of Term Exam',
-                'term' => 'Term 3',
+                'term_id' => $term->id,
             ],
             [
                 'start_date' => $year->start_date,

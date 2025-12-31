@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ config('app.name', 'Christian Liebig School') }}</title>
+    <title>{{ setting('site_name', config('app.name', 'School Portal')) }}</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -305,7 +305,7 @@
                 <div class="grid md:grid-cols-2 gap-6 mb-6">
                     <!-- Large Featured Image -->
                     <div class="md:col-span-2 relative rounded-3xl overflow-hidden shadow-2xl h-96 group">
-                        <img src="{{ asset('images/clss.jpg') }}" alt="Christian Liebig Secondary School Campus" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700">
+                        <img src="{{ asset('images/clss.jpg') }}" alt="{{ setting('site_name', 'School') }} Campus" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent">
                             <div class="absolute bottom-0 left-0 right-0 p-8 text-white">
                                 <h3 class="font-bold text-3xl mb-2">Our Beautiful Campus</h3>

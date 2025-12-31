@@ -14,6 +14,8 @@ class DashboardController extends Controller
 
         if ($user->hasRole('admin')) {
             return redirect()->route('dashboard.admin');
+        } elseif ($user->hasRole('head-teacher') || $user->hasRole('deputy-head-teacher')) {
+            return redirect()->route('dashboard.admin'); // Use admin dashboard for academic managers
         } elseif ($user->hasRole('teacher')) {
             return redirect()->route('dashboard.teacher');
         } elseif ($user->hasRole('student')) {
@@ -200,14 +202,29 @@ class DashboardController extends Controller
             // Use table prefix to avoid ambiguous column name error
             $streams = $teacher->streams()->where('stream_teacher.academic_year_id', $year->id)->get();
             
-            // Get exams relevant to this teacher (active exams with teacher's subjects and classes)
+            // Get exams relevant to this teacher with open results entry period
             $teacherSubjectIds = $subjects->pluck('id')->toArray();
             $teacherClassIds = $streams->pluck('class_id')->unique()->toArray();
             
             if (!empty($teacherSubjectIds) && !empty($teacherClassIds)) {
                 $relevantExams = \App\Models\Exam::with(['academicYear', 'term', 'examType', 'subjects', 'classes'])
                     ->where('academic_year_id', $year->id)
-                    ->where('end_date', '>=', now())
+                    // Show exams where results entry is currently open
+                    ->where(function($q) {
+                        $q->where(function($q2) {
+                            // Has specific entry period and is within that period
+                            $q2->whereNotNull('results_entry_start_date')
+                               ->whereNotNull('results_entry_end_date')
+                               ->where('results_entry_start_date', '<=', now())
+                               ->where('results_entry_end_date', '>=', now()->startOfDay());
+                        })->orWhere(function($q2) {
+                            // No specific entry period, use exam dates
+                            $q2->whereNull('results_entry_start_date')
+                               ->whereNull('results_entry_end_date')
+                               ->where('start_date', '<=', now())
+                               ->where('end_date', '>=', now());
+                        });
+                    })
                     ->whereHas('subjects', function($q) use ($teacherSubjectIds) {
                         $q->whereIn('subjects.id', $teacherSubjectIds);
                     })

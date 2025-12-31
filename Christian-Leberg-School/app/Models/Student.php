@@ -10,7 +10,36 @@ class Student extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $guarded = [];
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<string>
+     */
+    protected $fillable = [
+        'user_id',
+        'admission_number',
+        'admission_date',
+        'date_of_birth',
+        'gender',
+        'nationality',
+        'address',
+    ];
+
+    /**
+     * The attributes that are not mass assignable.
+     * Protects sensitive fields from mass assignment attacks.
+     *
+     * @var array<string>
+     */
+    protected $guarded = [
+        'id',
+        'results_access_blocked',   // Prevent unauthorized results blocking
+        'blocked_at',                // Prevent timestamp manipulation
+        'blocked_by',                // Prevent blocking attribution manipulation
+        'created_at',
+        'updated_at',
+        'deleted_at',
+    ];
 
     protected $casts = [
         'admission_date' => 'date',

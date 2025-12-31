@@ -44,7 +44,8 @@ class StudentAssociationsTest extends TestCase
         $student = Student::create(['user_id' => $user->id, 'admission_number' => 'S2', 'admission_date' => now(), 'date_of_birth' => now()->subYears(10), 'gender' => 'male']);
 
         $year = AcademicYear::create(['name' => '2025', 'start_date' => '2025-01-01', 'end_date' => '2025-12-31', 'is_active' => true]);
-        $exam = Exam::create(['academic_year_id' => $year->id, 'name' => 'Test Exam', 'term' => 'Term 1', 'start_date' => now(), 'end_date' => now()->addDay()]);
+        $term = \App\Models\Term::create(['name' => 'Term 1', 'academic_year_id' => $year->id, 'start_date' => '2025-01-01', 'end_date' => '2025-04-30', 'is_active' => true]);
+        $exam = Exam::create(['academic_year_id' => $year->id, 'term_id' => $term->id, 'name' => 'Test Exam', 'start_date' => now(), 'end_date' => now()->addDay()]);
         $subject = Subject::create(['name' => 'Mathematics', 'code' => 'MATH1']);
 
         $result = ExamResult::create(['exam_id' => $exam->id, 'student_id' => $student->id, 'subject_id' => $subject->id, 'marks' => 75]);

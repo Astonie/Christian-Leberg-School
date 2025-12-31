@@ -31,7 +31,33 @@ class UserSeeder extends Seeder
                 ]
             );
 
-            // 2. Teachers (Create 5 teachers)
+            // 2. Head Teacher
+            $headTeacherRole = Role::where('slug', 'head-teacher')->first();
+            if ($headTeacherRole) {
+                User::firstOrCreate(
+                    ['email' => 'headteacher@school.com'],
+                    [
+                        'name' => 'Head Teacher',
+                        'password' => $password,
+                        'role_id' => $headTeacherRole->id,
+                    ]
+                );
+            }
+
+            // 3. Deputy Head Teacher
+            $deputyHeadTeacherRole = Role::where('slug', 'deputy-head-teacher')->first();
+            if ($deputyHeadTeacherRole) {
+                User::firstOrCreate(
+                    ['email' => 'deputyhead@school.com'],
+                    [
+                        'name' => 'Deputy Head Teacher',
+                        'password' => $password,
+                        'role_id' => $deputyHeadTeacherRole->id,
+                    ]
+                );
+            }
+
+            // 4. Teachers (Create 5 teachers)
             $teacherRole = Role::where('slug', 'teacher')->first();
             $subjects = Subject::all();
             $academicYear = AcademicYear::where('is_active', true)->first();
@@ -118,7 +144,11 @@ class UserSeeder extends Seeder
                             $subjectId = $subjectIds[array_rand($subjectIds)];
                             // Avoid duplicate unique constraint by checking existence
                             if (! \DB::table('stream_teacher')->where('stream_id', $stream->id)->where('teacher_id', $teacher->id)->where('subject_id', $subjectId)->exists()) {
-                                $teacher->streams()->attach($stream->id, ['subject_id' => $subjectId, 'is_class_teacher' => false]);
+                                $teacher->streams()->attach($stream->id, [
+                                    'subject_id' => $subjectId, 
+                                    'is_class_teacher' => false,
+                                    'academic_year_id' => $academicYear->id
+                                ]);
                             }
                         }
                     }
@@ -133,7 +163,11 @@ class UserSeeder extends Seeder
                                 $stream = $availableStreams->random();
                                 $subjectId = $subjects->random()->id;
                                 if (! \DB::table('stream_teacher')->where('stream_id', $stream->id)->where('teacher_id', $teacher->id)->where('subject_id', $subjectId)->exists()) {
-                                    $teacher->streams()->attach($stream->id, ['subject_id' => $subjectId, 'is_class_teacher' => false]);
+                                    $teacher->streams()->attach($stream->id, [
+                                        'subject_id' => $subjectId, 
+                                        'is_class_teacher' => false,
+                                        'academic_year_id' => $academicYear->id
+                                    ]);
                                 }
                             }
                         }

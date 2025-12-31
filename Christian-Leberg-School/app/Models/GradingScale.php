@@ -2,11 +2,40 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class GradingScale extends Model
 {
-    protected $guarded = [];
+    use HasFactory;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<string>
+     */
+    protected $fillable = [
+        'grading_system_id',
+        'grade',
+        'min_percentage',
+        'max_percentage',
+        'grade_point',
+        'min_score',
+        'max_score',
+        'points',
+        'description',
+    ];
+
+    /**
+     * The attributes that are not mass assignable.
+     *
+     * @var array<string>
+     */
+    protected $guarded = [
+        'id',
+        'created_at',
+        'updated_at',
+    ];
 
     protected $casts = [
         // old schema compatibility

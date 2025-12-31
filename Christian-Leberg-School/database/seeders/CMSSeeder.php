@@ -61,6 +61,7 @@ class CMSSeeder extends Seeder
     private function createSettings()
     {
         $settings = [
+            // General Settings
             ['key' => 'site_name', 'value' => 'School Portal', 'type' => 'text', 'group' => 'general', 'label' => 'School Name', 'description' => 'The name of your school'],
             ['key' => 'site_tagline', 'value' => 'Empowering the next generation through quality education', 'type' => 'text', 'group' => 'general', 'label' => 'Site Tagline', 'description' => 'A short tagline for your school'],
             ['key' => 'site_description', 'value' => 'Excellence in Education - Building futures through quality education', 'type' => 'textarea', 'group' => 'general', 'label' => 'Site Description', 'description' => 'A brief description of your school'],
@@ -69,12 +70,62 @@ class CMSSeeder extends Seeder
             ['key' => 'contact_phone', 'value' => '+000 000 000 000', 'type' => 'text', 'group' => 'general', 'label' => 'Contact Phone'],
             ['key' => 'contact_address', 'value' => 'School Address Here', 'type' => 'textarea', 'group' => 'general', 'label' => 'Contact Address'],
             
-            // Hero Images
-            ['key' => 'hero_image_1', 'value' => '', 'type' => 'image', 'group' => 'homepage', 'label' => 'Hero Image 1', 'description' => 'Main campus/school image (top-left)'],
-            ['key' => 'hero_image_2', 'value' => '', 'type' => 'image', 'group' => 'homepage', 'label' => 'Hero Image 2', 'description' => 'Students image (bottom-left)'],
-            ['key' => 'hero_image_3', 'value' => '', 'type' => 'image', 'group' => 'homepage', 'label' => 'Hero Image 3', 'description' => 'Classroom image (top-right)'],
-            ['key' => 'hero_image_4', 'value' => '', 'type' => 'image', 'group' => 'homepage', 'label' => 'Hero Image 4', 'description' => 'Campus view image (bottom-right)'],
+            // Hero Section
+            ['key' => 'hero_badge_text', 'value' => 'Admissions Open 2025', 'type' => 'text', 'group' => 'homepage', 'label' => 'Hero Badge Text', 'description' => 'Text shown in the badge on hero section'],
+            ['key' => 'hero_image_1', 'value' => 'images/clss.jpg', 'type' => 'text', 'group' => 'homepage', 'label' => 'Hero Image 1', 'description' => 'Main campus/school image (top-left)'],
+            ['key' => 'hero_image_2', 'value' => 'images/clss-students.jpg', 'type' => 'text', 'group' => 'homepage', 'label' => 'Hero Image 2', 'description' => 'Students image (bottom-left)'],
+            ['key' => 'hero_image_3', 'value' => 'images/clss-class.jpg', 'type' => 'text', 'group' => 'homepage', 'label' => 'Hero Image 3', 'description' => 'Classroom image (top-right)'],
+            ['key' => 'hero_image_4', 'value' => 'images/clss-view.jpg', 'type' => 'text', 'group' => 'homepage', 'label' => 'Hero Image 4', 'description' => 'Campus view image (bottom-right)'],
             
+            // Features Section
+            ['key' => 'features_title', 'value' => 'Why Choose Us', 'type' => 'text', 'group' => 'homepage', 'label' => 'Features Section Title'],
+            ['key' => 'features_subtitle', 'value' => 'We provide a comprehensive education that prepares students for success in an ever-changing world', 'type' => 'textarea', 'group' => 'homepage', 'label' => 'Features Section Subtitle'],
+            
+            ['key' => 'feature_1_title', 'value' => 'Quality Education', 'type' => 'text', 'group' => 'homepage', 'label' => 'Feature 1 Title'],
+            ['key' => 'feature_1_description', 'value' => 'Modern curriculum designed to develop critical thinking and practical skills', 'type' => 'textarea', 'group' => 'homepage', 'label' => 'Feature 1 Description'],
+            ['key' => 'feature_1_icon', 'value' => 'book', 'type' => 'text', 'group' => 'homepage', 'label' => 'Feature 1 Icon', 'description' => 'Icon name: book, users, shield, lightning'],
+            ['key' => 'feature_1_color', 'value' => 'blue', 'type' => 'text', 'group' => 'homepage', 'label' => 'Feature 1 Color', 'description' => 'Color: blue, purple, green, orange'],
+            
+            ['key' => 'feature_2_title', 'value' => 'Experienced Staff', 'type' => 'text', 'group' => 'homepage', 'label' => 'Feature 2 Title'],
+            ['key' => 'feature_2_description', 'value' => 'Dedicated and qualified teachers committed to student success', 'type' => 'textarea', 'group' => 'homepage', 'label' => 'Feature 2 Description'],
+            ['key' => 'feature_2_icon', 'value' => 'users', 'type' => 'text', 'group' => 'homepage', 'label' => 'Feature 2 Icon'],
+            ['key' => 'feature_2_color', 'value' => 'purple', 'type' => 'text', 'group' => 'homepage', 'label' => 'Feature 2 Color'],
+            
+            ['key' => 'feature_3_title', 'value' => 'Safe Environment', 'type' => 'text', 'group' => 'homepage', 'label' => 'Feature 3 Title'],
+            ['key' => 'feature_3_description', 'value' => 'Secure campus with comprehensive safety measures and pastoral care', 'type' => 'textarea', 'group' => 'homepage', 'label' => 'Feature 3 Description'],
+            ['key' => 'feature_3_icon', 'value' => 'shield', 'type' => 'text', 'group' => 'homepage', 'label' => 'Feature 3 Icon'],
+            ['key' => 'feature_3_color', 'value' => 'green', 'type' => 'text', 'group' => 'homepage', 'label' => 'Feature 3 Color'],
+            
+            ['key' => 'feature_4_title', 'value' => 'Modern Facilities', 'type' => 'text', 'group' => 'homepage', 'label' => 'Feature 4 Title'],
+            ['key' => 'feature_4_description', 'value' => 'State-of-the-art classrooms, labs, and sports facilities', 'type' => 'textarea', 'group' => 'homepage', 'label' => 'Feature 4 Description'],
+            ['key' => 'feature_4_icon', 'value' => 'lightning', 'type' => 'text', 'group' => 'homepage', 'label' => 'Feature 4 Icon'],
+            ['key' => 'feature_4_color', 'value' => 'orange', 'type' => 'text', 'group' => 'homepage', 'label' => 'Feature 4 Color'],
+            
+            // Stats Section
+            ['key' => 'stats_title', 'value' => 'Our Achievements', 'type' => 'text', 'group' => 'homepage', 'label' => 'Stats Section Title'],
+            ['key' => 'stats_subtitle', 'value' => 'Proud of our accomplishments and continued commitment to excellence', 'type' => 'textarea', 'group' => 'homepage', 'label' => 'Stats Section Subtitle'],
+            
+            ['key' => 'stat_1_value', 'value' => '1000+', 'type' => 'text', 'group' => 'homepage', 'label' => 'Stat 1 Value'],
+            ['key' => 'stat_1_label', 'value' => 'Students', 'type' => 'text', 'group' => 'homepage', 'label' => 'Stat 1 Label'],
+            
+            ['key' => 'stat_2_value', 'value' => '50+', 'type' => 'text', 'group' => 'homepage', 'label' => 'Stat 2 Value'],
+            ['key' => 'stat_2_label', 'value' => 'Teachers', 'type' => 'text', 'group' => 'homepage', 'label' => 'Stat 2 Label'],
+            
+            ['key' => 'stat_3_value', 'value' => '20+', 'type' => 'text', 'group' => 'homepage', 'label' => 'Stat 3 Value'],
+            ['key' => 'stat_3_label', 'value' => 'Years', 'type' => 'text', 'group' => 'homepage', 'label' => 'Stat 3 Label'],
+            
+            ['key' => 'stat_4_value', 'value' => '95%', 'type' => 'text', 'group' => 'homepage', 'label' => 'Stat 4 Value'],
+            ['key' => 'stat_4_label', 'value' => 'Success Rate', 'type' => 'text', 'group' => 'homepage', 'label' => 'Stat 4 Label'],
+            
+            // CTA Section
+            ['key' => 'cta_title', 'value' => 'Ready to Join Us?', 'type' => 'text', 'group' => 'homepage', 'label' => 'CTA Section Title'],
+            ['key' => 'cta_subtitle', 'value' => 'Discover how our school can help your child excel and reach their full potential', 'type' => 'textarea', 'group' => 'homepage', 'label' => 'CTA Section Subtitle'],
+            ['key' => 'cta_button_1_text', 'value' => 'Apply Now', 'type' => 'text', 'group' => 'homepage', 'label' => 'CTA Button 1 Text'],
+            ['key' => 'cta_button_1_link', 'value' => '/page/admissions', 'type' => 'text', 'group' => 'homepage', 'label' => 'CTA Button 1 Link'],
+            ['key' => 'cta_button_2_text', 'value' => 'Contact Us', 'type' => 'text', 'group' => 'homepage', 'label' => 'CTA Button 2 Text'],
+            ['key' => 'cta_button_2_link', 'value' => '/page/contact', 'type' => 'text', 'group' => 'homepage', 'label' => 'CTA Button 2 Link'],
+            
+            // SEO & Social
             ['key' => 'site_keywords', 'value' => 'school, education, learning, secondary school', 'type' => 'text', 'group' => 'seo', 'label' => 'SEO Keywords'],
             ['key' => 'social_facebook', 'value' => '', 'type' => 'text', 'group' => 'social', 'label' => 'Facebook URL'],
             ['key' => 'social_twitter', 'value' => '', 'type' => 'text', 'group' => 'social', 'label' => 'Twitter URL'],
@@ -349,20 +400,19 @@ class CMSSeeder extends Seeder
         $headerMenu->allItems()->delete();
 
         $headerItems = [
-            ['title' => 'Home', 'route' => 'website.home', 'order' => 1],
-            ['title' => 'About', 'route' => 'website.page', 'url' => '/page/about', 'order' => 2],
-            ['title' => 'Academics', 'route' => 'website.page', 'url' => '/page/academics', 'order' => 3],
-            ['title' => 'News', 'route' => 'website.blog', 'order' => 4],
-            ['title' => 'Events', 'route' => 'website.events', 'order' => 5],
-            ['title' => 'Contact', 'route' => 'website.page', 'url' => '/page/contact', 'order' => 6],
+            ['title' => 'Home', 'url' => '/', 'order' => 1],
+            ['title' => 'About', 'url' => '/page/about', 'order' => 2],
+            ['title' => 'Admissions', 'url' => '/page/admissions', 'order' => 3],
+            ['title' => 'News', 'url' => '/blog', 'order' => 4],
+            ['title' => 'Events', 'url' => '/events', 'order' => 5],
+            ['title' => 'Contact', 'url' => '/page/contact', 'order' => 6],
         ];
 
         foreach ($headerItems as $item) {
             MenuItem::create([
                 'menu_id' => $headerMenu->id,
                 'title' => $item['title'],
-                'url' => $item['url'] ?? null,
-                'route' => $item['route'],
+                'url' => $item['url'],
                 'order' => $item['order'],
                 'active' => true,
             ]);

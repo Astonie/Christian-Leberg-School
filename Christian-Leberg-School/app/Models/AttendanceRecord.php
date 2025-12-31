@@ -2,11 +2,38 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class AttendanceRecord extends Model
 {
-    protected $guarded = [];
+    use HasFactory;
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<string>
+     */
+    protected $fillable = [
+        'student_id',
+        'stream_id',
+        'subject_id',
+        'date',
+        'status',
+        'remarks',
+    ];
+
+    /**
+     * The attributes that are not mass assignable.
+     * Prevents attribution manipulation.
+     *
+     * @var array<string>
+     */
+    protected $guarded = [
+        'id',
+        'teacher_id',
+        'created_at',
+        'updated_at',
+    ];
 
     protected $casts = [
         'date' => 'date',

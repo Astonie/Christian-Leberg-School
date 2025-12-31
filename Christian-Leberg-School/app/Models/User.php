@@ -17,8 +17,25 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+    ];
+
+    /**
+     * The attributes that are not mass assignable.
+     * Protects sensitive fields from mass assignment attacks.
+     *
+     * @var array<string>
+     */
     protected $guarded = [
         'id',
+        'role_id',              // Prevent privilege escalation
+        'is_active',            // Prevent self-activation
+        'email_verified_at',    // Prevent email verification bypass
+        'remember_token',
+        'last_login_at',
         'created_at',
         'updated_at',
     ];
@@ -75,6 +92,26 @@ class User extends Authenticatable
         }
         
         return $this->role && $this->role->id === $role->id;
+    }
+
+    public function hasAnyRole($roles)
+    {
+        if (is_string($roles)) {
+            $roles = explode('|', $roles);
+        }
+
+        foreach ($roles as $role) {
+            if ($this->hasRole(trim($role))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function isAcademicManager()
+    {
+        return $this->hasAnyRole(['admin', 'head-teacher', 'deputy-head-teacher']);
     }
 
     public function hasPermission($permission)

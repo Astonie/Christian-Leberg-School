@@ -2,14 +2,41 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ExamResult extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
-    protected $guarded = [];
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<string>
+     */
+    protected $fillable = [
+        'exam_id',
+        'student_id',
+        'subject_id',
+        'marks',
+        'grade',
+        'remarks',
+        'component_breakdown',
+    ];
+
+    /**
+     * The attributes that are not mass assignable.
+     *
+     * @var array<string>
+     */
+    protected $guarded = [
+        'id',
+        'is_computed',      // Prevent manual override of computed status
+        'created_at',
+        'updated_at',
+        'deleted_at',
+    ];
     
     protected $casts = [
         'is_computed' => 'boolean',

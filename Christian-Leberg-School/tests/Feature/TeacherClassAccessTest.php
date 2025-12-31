@@ -32,6 +32,7 @@ class TeacherClassAccessTest extends TestCase
             'stream_id' => $stream->id,
             'teacher_id' => $teacher->id,
             'subject_id' => null,
+            'academic_year_id' => $year->id,
             'is_class_teacher' => true,
             'created_at' => now(),
             'updated_at' => now(),

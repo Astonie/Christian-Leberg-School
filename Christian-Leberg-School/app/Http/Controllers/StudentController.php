@@ -23,6 +23,8 @@ class StudentController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('viewAny', Student::class);
+        
         $user = $request->user();
         $query = Student::with(['user', 'streams.schoolClass']);
         $baseQuery = Student::query(); // For stats calculation
@@ -167,6 +169,8 @@ class StudentController extends Controller
      */
     public function create()
     {
+        $this->authorize('create', Student::class);
+        
         $classes = SchoolClass::with('streams')->get();
         return view('students.create', compact('classes'));
     }
@@ -220,17 +224,7 @@ class StudentController extends Controller
      */
     public function show(Request $request, Student $student)
     {
-        $user = $request->user();
-
-        // If teacher, ensure the student is in one of their assigned streams for the active academic year
-        if ($user->hasRole('teacher')) {
-            $teacher = $user->teacher;
-            $year = AcademicYear::active()->first();
-            $inStream = $student->streams()->wherePivot('academic_year_id', $year?->id)->where('student_stream.is_active', true)->whereIn('streams.id', $teacher->streams()->where('stream_teacher.academic_year_id', $year?->id)->pluck('streams.id')->all())->exists();
-            if (! $inStream) {
-                abort(403);
-            }
-        }
+        $this->authorize('view', $student);
 
         $student->load(['user', 'guardians.user', 'streams.schoolClass', 'attendanceRecords', 'examResults.exam', 'examResults.subject']);
         $exams = Exam::latest()->get();
@@ -243,6 +237,8 @@ class StudentController extends Controller
      */
     public function edit(Student $student)
     {
+        $this->authorize('update', $student);
+        
         $student->load('user', 'activeStreams');
         $classes = SchoolClass::with('streams')->get();
         return view('students.edit', compact('student', 'classes'));
@@ -253,6 +249,8 @@ class StudentController extends Controller
      */
     public function update(UpdateStudentRequest $request, Student $student)
     {
+        $this->authorize('update', $student);
+        
         DB::transaction(function () use ($request, $student) {
             // Update User
             $student->user->update([
@@ -291,6 +289,8 @@ class StudentController extends Controller
      */
     public function destroy(Student $student)
     {
+        $this->authorize('delete', $student);
+        
         $student->user->delete(); // Soft delete user
         $student->delete(); // Soft delete profile
         return redirect()->route('students.index')->with('success', 'Student deleted successfully.');
@@ -301,6 +301,8 @@ class StudentController extends Controller
      */
     public function storeGuardian(Request $request, Student $student)
     {
+        $this->authorize('addGuardian', $student);
+        
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],

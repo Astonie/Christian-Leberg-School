@@ -18,6 +18,8 @@ class AttendanceController extends Controller
 {
     public function index()
     {
+        $this->authorize('viewAny', AttendanceRecord::class);
+        
         $user = Auth::user();
         
         // If teacher, only show streams and subjects they are assigned to
@@ -49,6 +51,8 @@ class AttendanceController extends Controller
 
     public function create(Request $request)
     {
+        $this->authorize('create', AttendanceRecord::class);
+        
         $user = Auth::user();
         
         $request->validate([
@@ -61,7 +65,8 @@ class AttendanceController extends Controller
         $subject = Subject::findOrFail($request->subject_id);
         $date = $request->date;
         
-        // If teacher, verify they are assigned to this stream and teach this subject
+        // Policy will check if teacher is assigned to this stream/subject
+        // Additional business logic verification for specific stream/subject assignment
         if ($user->hasRole('teacher') && !$user->hasRole('admin')) {
             $teacher = $user->teacher;
             $activeYear = AcademicYear::active()->first();
@@ -105,6 +110,8 @@ class AttendanceController extends Controller
 
     public function store(StoreAttendanceRequest $request)
     {
+        $this->authorize('create', AttendanceRecord::class);
+        
         $user = Auth::user();
         $data = $request->validated();
         $streamId = $data['stream_id'];
@@ -219,6 +226,8 @@ class AttendanceController extends Controller
 
     public function reports(Request $request)
     {
+        $this->authorize('viewAny', AttendanceRecord::class);
+        
         $user = Auth::user();
         
         // Get filter parameters
@@ -327,6 +336,7 @@ class AttendanceController extends Controller
     {
         $user = Auth::user();
         
+        // This method is guardian-specific, verify role
         if (!$user->hasRole('guardian')) {
             abort(403, 'Access denied.');
         }

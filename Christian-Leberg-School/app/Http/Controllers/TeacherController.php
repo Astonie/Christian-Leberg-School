@@ -19,6 +19,8 @@ class TeacherController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('viewAny', Teacher::class);
+        
         // Handle CSV export
         if ($request->has('export') && $request->export === 'csv') {
             return $this->export($request);
@@ -134,6 +136,8 @@ class TeacherController extends Controller
      */
     public function create()
     {
+        $this->authorize('create', Teacher::class);
+        
         return view('teachers.create');
     }
 
@@ -142,6 +146,8 @@ class TeacherController extends Controller
      */
     public function store(StoreTeacherRequest $request)
     {
+        $this->authorize('create', Teacher::class);
+        
         DB::transaction(function () use ($request) {
             // 1. Create User
             $password = Str::random(8); // Temporary password, typically send via email
@@ -171,6 +177,8 @@ class TeacherController extends Controller
      */
     public function show(Teacher $teacher)
     {
+        $this->authorize('view', $teacher);
+        
         $teacher->load('user', 'subjects', 'streams.schoolClass');
 
         // Build a summary of assignments: stream -> subject, is_class_teacher
@@ -256,11 +264,9 @@ class TeacherController extends Controller
         ]);
 
         $user = $request->user();
-        if (! $user->hasRole('teacher')) {
-            abort(403);
-        }
-
         $teacher = $user->teacher;
+        $this->authorize('view', $teacher);
+        
         $exam = \App\Models\Exam::find($request->input('exam_id'));
         $stream = \App\Models\Stream::find($request->input('stream_id'));
         $subject = \App\Models\Subject::find($request->input('subject_id'));
@@ -304,6 +310,8 @@ class TeacherController extends Controller
      */
     public function edit(Teacher $teacher)
     {
+        $this->authorize('update', $teacher);
+        
         $teacher->load('user');
         return view('teachers.edit', compact('teacher'));
     }
@@ -313,6 +321,8 @@ class TeacherController extends Controller
      */
     public function update(UpdateTeacherRequest $request, Teacher $teacher)
     {
+        $this->authorize('update', $teacher);
+        
         DB::transaction(function () use ($request, $teacher) {
             // Update User
             $teacher->user->update([
@@ -332,6 +342,8 @@ class TeacherController extends Controller
      */
     public function destroy(Teacher $teacher)
     {
+        $this->authorize('delete', $teacher);
+        
         DB::transaction(function () use ($teacher) {
             $user = $teacher->user;
             $teacher->delete(); // Soft delete teacher

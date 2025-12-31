@@ -7,6 +7,8 @@ use App\Models\ExamResult;
 use App\Models\Student;
 use App\Models\Subject;
 use App\Models\GradingScale;
+use App\Models\StudentScore;
+use App\Models\AssessmentComponent;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +17,20 @@ class ExamResultController extends Controller
 {
     public function create(Exam $exam)
     {
+        // Check timing restrictions before authorization
+        if ($exam->isResultsEntryLocked()) {
+            return redirect()->route('exams.show', $exam)
+                ->with('error', 'Results entry is currently locked for this exam.');
+        }
+
+        if (!$exam->isResultsEntryOpen()) {
+            return redirect()->route('exams.show', $exam)
+                ->with('warning', 'Results entry is not yet open for this exam.');
+        }
+
+        // Authorize using policy
+        $this->authorize('create', [ExamResult::class, $exam]);
+
         $user = auth()->user();
         
         // If user is a teacher, only show subjects they teach in this academic year
@@ -24,20 +40,11 @@ class ExamResultController extends Controller
                 ->wherePivot('academic_year_id', $exam->academic_year_id)
                 ->get();
             
-            // If teacher doesn't teach any subjects in this academic year, deny access
-            if ($subjects->isEmpty()) {
-                abort(403, 'You do not teach any subjects in this academic year.');
-            }
-            
             // Get teacher's assigned stream IDs for this academic year
             $teacherStreamIds = $teacher->streams()
                 ->where('stream_teacher.academic_year_id', $exam->academic_year_id)
                 ->pluck('streams.id')
                 ->toArray();
-            
-            if (empty($teacherStreamIds)) {
-                abort(403, 'You are not assigned to any streams in this academic year.');
-            }
         } else {
             // Admin can see all subjects
             $subjects = Subject::all();
@@ -87,7 +94,115 @@ class ExamResultController extends Controller
             $classes = \App\Models\SchoolClass::with('streams')->get();
         }
 
+        // Check if exam has assessment structure - if yes, redirect to component-based entry
+        if ($exam->assessment_structure_id && $selectedSubjectId) {
+            return redirect()->route('exams.results.create-components', [
+                'exam' => $exam->id,
+                'subject_id' => $selectedSubjectId,
+                'class_id' => $classId
+            ]);
+        }
+
         return view('exams.results.create', compact('exam', 'students', 'subjects', 'classes', 'classId', 'selectedSubjectId', 'existingResults'));
+    }
+
+    /**
+     * Component-based mark entry when exam has assessment structure
+     */
+    public function createWithComponents(Exam $exam, Request $request)
+    {
+        // Check if results entry is locked
+        if ($exam->isResultsEntryLocked()) {
+            return redirect()->route('exams.show', $exam)
+                ->with('error', 'Results entry period has ended. The deadline was ' . $exam->results_entry_end_date->format('M d, Y') . '.');
+        }
+
+        // Exam must have assessment structure
+        if (!$exam->assessment_structure_id) {
+            return redirect()->route('exams.results.create', $exam)
+                ->with('info', 'This exam does not use assessment structures. Using standard mark entry.');
+        }
+
+        $user = auth()->user();
+        
+        // Get subjects and permissions (same as create method)
+        if ($user->teacher && !$user->hasRole('admin')) {
+            $teacher = $user->teacher;
+            $subjects = $teacher->subjects()
+                ->wherePivot('academic_year_id', $exam->academic_year_id)
+                ->get();
+            
+            if ($subjects->isEmpty()) {
+                abort(403, 'You do not teach any subjects in this academic year.');
+            }
+            
+            $teacherStreamIds = $teacher->streams()
+                ->where('stream_teacher.academic_year_id', $exam->academic_year_id)
+                ->pluck('streams.id')
+                ->toArray();
+            
+            if (empty($teacherStreamIds)) {
+                abort(403, 'You are not assigned to any streams in this academic year.');
+            }
+        } else {
+            $subjects = Subject::all();
+            $teacherStreamIds = null;
+        }
+        
+        $classId = $request->query('class_id');
+        $selectedSubjectId = $request->query('subject_id');
+
+        // Load assessment structure with components
+        $assessmentStructure = $exam->assessmentStructure()->with('components')->first();
+        
+        // List students
+        $studentQuery = Student::with(['user', 'streams' => function ($q) use ($exam) {
+            $q->wherePivot('academic_year_id', $exam->academic_year_id)->wherePivot('is_active', true);
+        }])->whereHas('streams', function ($q) use ($exam, $classId, $teacherStreamIds) {
+            $q->wherePivot('academic_year_id', $exam->academic_year_id)->wherePivot('is_active', true);
+            
+            if ($teacherStreamIds !== null) {
+                $q->whereIn('streams.id', $teacherStreamIds);
+            }
+            
+            if ($classId) {
+                $q->where('class_id', $classId);
+            }
+        });
+
+        $students = $studentQuery->get();
+        
+        // Get existing component scores if subject selected
+        $existingScores = collect();
+        if ($selectedSubjectId) {
+            $existingScores = StudentScore::where('exam_id', $exam->id)
+                ->where('subject_id', $selectedSubjectId)
+                ->whereIn('student_id', $students->pluck('id'))
+                ->get()
+                ->groupBy('student_id');
+        }
+
+        // Get classes for filter
+        if ($teacherStreamIds !== null) {
+            $classes = \App\Models\SchoolClass::with(['streams' => function ($q) use ($teacherStreamIds) {
+                $q->whereIn('streams.id', $teacherStreamIds);
+            }])->whereHas('streams', function ($q) use ($teacherStreamIds) {
+                $q->whereIn('streams.id', $teacherStreamIds);
+            })->get();
+        } else {
+            $classes = \App\Models\SchoolClass::with('streams')->get();
+        }
+
+        return view('exams.results.create-components', compact(
+            'exam',
+            'students',
+            'subjects',
+            'classes',
+            'classId',
+            'selectedSubjectId',
+            'assessmentStructure',
+            'existingScores'
+        ));
     }
 
     public function createForSubject(Request $request, Exam $exam, Subject $subject)
@@ -183,6 +298,11 @@ class ExamResultController extends Controller
 
     public function store(Request $request, Exam $exam)
     {
+        // Check if results entry is locked
+        if ($exam->isResultsEntryLocked()) {
+            return back()->with('error', 'Results entry period has ended. Cannot save marks after deadline.');
+        }
+
         $user = auth()->user();
         
         // If user is a teacher, verify they teach the subject they're entering results for
@@ -290,6 +410,109 @@ class ExamResultController extends Controller
         });
 
         return redirect()->route('exams.show', $exam)->with('success', 'Results saved successfully.');
+    }
+
+    /**
+     * Store component-based marks
+     */
+    public function storeComponents(Request $request, Exam $exam)
+    {
+        // Check if results entry is locked
+        if ($exam->isResultsEntryLocked()) {
+            return back()->with('error', 'Results entry period has ended. Cannot save marks after deadline.');
+        }
+
+        // Validate exam has assessment structure
+        if (!$exam->assessment_structure_id) {
+            return redirect()->route('exams.results.create', $exam)
+                ->with('error', 'This exam does not use assessment structures.');
+        }
+
+        $user = auth()->user();
+        
+        // Permission checks
+        if ($user->teacher && !$user->hasRole('admin')) {
+            $teacher = $user->teacher;
+            $subjectId = $request->input('subject_id');
+            
+            $teaches = $teacher->subjects()
+                ->wherePivot('academic_year_id', $exam->academic_year_id)
+                ->where('subjects.id', $subjectId)
+                ->exists();
+            
+            if (!$teaches) {
+                abort(403, 'You do not teach this subject in this academic year.');
+            }
+        }
+        
+        $data = $request->validate([
+            'subject_id' => ['required', 'exists:subjects,id'],
+            'components' => ['required', 'array'],
+            'components.*' => ['required', 'array'],
+            'components.*.student_id' => ['required', 'exists:students,id'],
+            'components.*.scores' => ['required', 'array'],
+            'components.*.scores.*' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        DB::transaction(function () use ($exam, $data, $user) {
+            $subjectId = $data['subject_id'];
+            
+            foreach ($data['components'] as $item) {
+                $studentId = $item['student_id'];
+                $totalWeightedScore = 0;
+                $totalWeight = 0;
+                
+                // Save individual component scores and calculate weighted total
+                foreach ($item['scores'] as $componentId => $score) {
+                    if ($score === null || $score === '') {
+                        continue;
+                    }
+                    
+                    $component = AssessmentComponent::find($componentId);
+                    if (!$component) continue;
+                    
+                    // Save component score
+                    StudentScore::updateOrCreate(
+                        [
+                            'student_id' => $studentId,
+                            'assessment_component_id' => $componentId,
+                            'subject_id' => $subjectId,
+                            'exam_id' => $exam->id,
+                            'academic_year_id' => $exam->academic_year_id,
+                            'term_id' => $exam->term_id,
+                        ],
+                        [
+                            'score' => $score,
+                            'max_score' => $component->max_marks ?? 100,
+                            'entered_by' => $user->id,
+                        ]
+                    );
+                    
+                    // Calculate weighted contribution
+                    $percentage = ($score / ($component->max_marks ?? 100)) * 100;
+                    $weightedScore = ($percentage * $component->weight) / 100;
+                    $totalWeightedScore += $weightedScore;
+                    $totalWeight += $component->weight;
+                }
+                
+                // Save total marks to exam_results table (for backward compatibility)
+                if ($totalWeight > 0) {
+                    ExamResult::updateOrCreate(
+                        [
+                            'exam_id' => $exam->id,
+                            'student_id' => $studentId,
+                            'subject_id' => $subjectId
+                        ],
+                        [
+                            'marks' => round($totalWeightedScore, 2)
+                        ]
+                    );
+                }
+            }
+        });
+
+        return redirect()->route('exams.results.create-components', ['exam' => $exam->id, 'subject_id' => $data['subject_id']])
+            ->with('success', 'Component marks saved successfully. Total marks calculated and stored.');
     }
 
     public function import(Request $request, Exam $exam)

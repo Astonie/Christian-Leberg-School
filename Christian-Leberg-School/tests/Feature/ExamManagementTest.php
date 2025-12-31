@@ -24,10 +24,12 @@ class ExamManagementTest extends TestCase
             'is_active' => true,
         ]);
 
+        $term = \App\Models\Term::create(['name' => 'Term 1', 'academic_year_id' => $year->id, 'start_date' => '2025-01-01', 'end_date' => '2025-04-30', 'is_active' => true]);
+
         $response = $this->actingAs($admin)->post(route('exams.store'), [
             'name' => 'Mid Term Exams',
             'academic_year_id' => $year->id,
-            'term' => 'Term 1',
+            'term_id' => $term->id,
             'start_date' => '2025-05-01',
             'end_date' => '2025-05-05',
         ]);

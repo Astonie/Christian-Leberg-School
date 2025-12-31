@@ -8,7 +8,32 @@ use App\Models\Role;
 
 class Announcement extends Model
 {
-    protected $guarded = [];
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<string>
+     */
+    protected $fillable = [
+        'user_id',
+        'title',
+        'content',
+        'priority',
+        'published_at',
+        'expires_at',
+    ];
+
+    /**
+     * The attributes that are not mass assignable.
+     * Prevents unauthorized announcement publication.
+     *
+     * @var array<string>
+     */
+    protected $guarded = [
+        'id',
+        'is_published',
+        'created_at',
+        'updated_at',
+    ];
 
     protected $casts = [
         'published_at' => 'datetime',

@@ -25,7 +25,8 @@ class GenerateExamReportsCommandTest extends TestCase
         Storage::fake('local');
 
         $year = AcademicYear::create(['name' => '2025', 'start_date' => '2025-01-01', 'end_date' => '2025-12-31', 'is_active' => true]);
-        $exam = Exam::create(['academic_year_id' => $year->id, 'name' => 'Command Exam', 'term' => 'Term 1', 'start_date' => '2025-06-01', 'end_date' => '2025-06-02']);
+        $term = \App\Models\Term::create(['name' => 'Term 1', 'academic_year_id' => $year->id, 'start_date' => '2025-01-01', 'end_date' => '2025-04-30', 'is_active' => true]);
+        $exam = Exam::create(['academic_year_id' => $year->id, 'term_id' => $term->id, 'name' => 'Command Exam', 'start_date' => '2025-06-01', 'end_date' => '2025-06-02']);
 
         $class = SchoolClass::create(['name' => 'Grade Cmd', 'level' => 1]);
         $stream = Stream::create(['name' => 'A', 'class_id' => $class->id, 'academic_year_id' => $year->id]);

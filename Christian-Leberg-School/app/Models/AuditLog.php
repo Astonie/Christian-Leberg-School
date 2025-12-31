@@ -6,7 +6,31 @@ use Illuminate\Database\Eloquent\Model;
 
 class AuditLog extends Model
 {
-    protected $guarded = [];
+    /**
+     * Audit logs should NEVER be mass-assigned.
+     *
+     * @var array<string>
+     */
+    protected $fillable = [];
+
+    /**
+     * All attributes are guarded for audit integrity.
+     *
+     * @var array<string>
+     */
+    protected $guarded = [
+        'id',
+        'user_id',
+        'action',
+        'model_type',
+        'model_id',
+        'old_values',
+        'new_values',
+        'ip_address',
+        'user_agent',
+        'created_at',
+        'updated_at',
+    ];
 
     protected $casts = [
         'old_values' => 'array',

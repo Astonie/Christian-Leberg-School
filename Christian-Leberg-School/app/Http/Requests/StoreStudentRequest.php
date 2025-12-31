@@ -11,7 +11,7 @@ class StoreStudentRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true; // Use policy later
+        return $this->user()->can('create', \App\Models\Student::class);
     }
 
     public function rules(): array

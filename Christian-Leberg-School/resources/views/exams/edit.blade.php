@@ -146,6 +146,54 @@
                             class="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                             placeholder="Optional: Add any additional details about this examination">{{ old('description', $exam->description) }}</textarea>
                     </div>
+
+                    <!-- Results Entry Period -->
+                    <div class="border-t border-gray-200 pt-6">
+                        <h4 class="text-base font-bold text-gray-900 mb-4 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                            Results Entry Period
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="results_entry_start_date" class="block text-sm font-bold text-gray-900 mb-2">
+                                    Entry Start Date
+                                </label>
+                                <input type="date" id="results_entry_start_date" name="results_entry_start_date" 
+                                    value="{{ old('results_entry_start_date', $exam->results_entry_start_date?->format('Y-m-d')) }}"
+                                    class="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                @error('results_entry_start_date')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label for="results_entry_end_date" class="block text-sm font-bold text-gray-900 mb-2">
+                                    Entry End Date
+                                </label>
+                                <input type="date" id="results_entry_end_date" name="results_entry_end_date" 
+                                    value="{{ old('results_entry_end_date', $exam->results_entry_end_date?->format('Y-m-d')) }}"
+                                    class="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                                @error('results_entry_end_date')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="mt-4 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-yellow-600 mr-3 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                </svg>
+                                <div>
+                                    <p class="text-sm font-semibold text-yellow-800">Entry Period Controls</p>
+                                    <p class="text-sm text-yellow-700 mt-1">
+                                        Set specific dates when teachers can enter exam results. After the end date, the system will automatically lock result entry. Leave blank to allow entry anytime during the exam period.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -231,34 +279,57 @@
             </div>
 
             <!-- Grading Configuration -->
-            @if($gradingScales->isNotEmpty())
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-6">
-                    <div class="bg-gradient-to-r from-orange-50 to-orange-100 px-6 py-4 border-b border-orange-200">
-                        <h3 class="text-lg font-bold text-orange-900 flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                            </svg>
-                            Grading Scale
-                        </h3>
-                    </div>
-
-                    <div class="p-6">
-                        <label for="grading_scale_id" class="block text-sm font-bold text-gray-900 mb-2">
-                            Select Grading Scale
-                        </label>
-                        <select name="grading_scale_id" id="grading_scale_id"
-                            class="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all">
-                            <option value="">Use Default Scale</option>
-                            @foreach($gradingScales as $scale)
-                                <option value="{{ $scale->id }}" {{ old('grading_scale_id', $exam->grading_scale_id) == $scale->id ? 'selected' : '' }}>
-                                    {{ $scale->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <p class="mt-2 text-sm text-gray-600">Optional: Choose a specific grading scale for this examination</p>
-                    </div>
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+                <div class="bg-gradient-to-r from-orange-50 to-orange-100 px-6 py-4 border-b border-orange-200">
+                    <h3 class="text-lg font-bold text-orange-900 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        Grading Configuration
+                    </h3>
                 </div>
-            @endif
+
+                <div class="p-6 space-y-6">
+                    @if($gradingScales->isNotEmpty())
+                        <div>
+                            <label for="grading_scale_id" class="block text-sm font-bold text-gray-900 mb-2">
+                                Grading Scale
+                            </label>
+                            <select name="grading_scale_id" id="grading_scale_id"
+                                class="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all">
+                                <option value="">Use Default Scale</option>
+                                @foreach($gradingScales as $scale)
+                                    <option value="{{ $scale->id }}" {{ old('grading_scale_id', $exam->grading_scale_id) == $scale->id ? 'selected' : '' }}>
+                                        {{ $scale->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <p class="mt-2 text-sm text-gray-600">Optional: Choose a specific grading scale (A-F, 1-7, etc.) for this examination</p>
+                        </div>
+                    @endif
+
+                    @if($assessmentStructures->isNotEmpty())
+                        <div>
+                            <label for="assessment_structure_id" class="block text-sm font-bold text-gray-900 mb-2">
+                                Assessment Structure
+                            </label>
+                            <select name="assessment_structure_id" id="assessment_structure_id"
+                                class="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all">
+                                <option value="">No Assessment Structure</option>
+                                @foreach($assessmentStructures as $structure)
+                                    <option value="{{ $structure->id }}" {{ old('assessment_structure_id', $exam->assessment_structure_id) == $structure->id ? 'selected' : '' }}>
+                                        {{ $structure->name }} @if($structure->subject)({{ $structure->subject->name }})@endif
+                                    </option>
+                                @endforeach
+                            </select>
+                            <p class="mt-2 text-sm text-gray-600">
+                                <strong>Optional:</strong> Defines how marks are broken down (e.g., 40% Continuous Assessment + 60% Final Exam). 
+                                This structure will be used when entering and calculating marks for this examination.
+                            </p>
+                        </div>
+                    @endif
+                </div>
+            </div>
 
             <!-- Submit Actions -->
             <div class="flex flex-col sm:flex-row justify-end gap-3">

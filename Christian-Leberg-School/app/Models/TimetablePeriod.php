@@ -6,7 +6,30 @@ use Illuminate\Database\Eloquent\Model;
 
 class TimetablePeriod extends Model
 {
-    protected $guarded = [];
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<string>
+     */
+    protected $fillable = [
+        'name',
+        'start_time',
+        'end_time',
+        'is_break',
+        'order',
+    ];
+
+    /**
+     * The attributes that are not mass assignable.
+     *
+     * @var array<string>
+     */
+    protected $guarded = [
+        'id',
+        'is_active',
+        'created_at',
+        'updated_at',
+    ];
 
     protected $casts = [
         'start_time' => 'datetime:H:i',

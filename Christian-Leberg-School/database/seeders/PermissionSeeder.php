@@ -158,6 +158,148 @@ class PermissionSeeder extends Seeder
             $this->command->info('Assigned permissions to Teacher role.');
         }
 
+        // Head Teacher permissions - Full academic management, no technical/CMS access
+        $headTeacherRole = Role::where('slug', 'head-teacher')->first();
+        if ($headTeacherRole) {
+            $headTeacherPermissions = Permission::whereIn('slug', [
+                // Student Management
+                'view-students',
+                'create-students',
+                'edit-students',
+                'delete-students',
+                
+                // Teacher Management
+                'view-teachers',
+                'create-teachers',
+                'edit-teachers',
+                'delete-teachers',
+                'assign-teacher-subjects',
+                'assign-teacher-streams',
+                
+                // Guardian Management
+                'view-guardians',
+                'create-guardians',
+                'edit-guardians',
+                'delete-guardians',
+                
+                // Academic Year Management
+                'view-academic-years',
+                'create-academic-years',
+                'edit-academic-years',
+                'delete-academic-years',
+                
+                // Class Management
+                'view-classes',
+                'create-classes',
+                'edit-classes',
+                'delete-classes',
+                
+                // Stream Management
+                'view-streams',
+                'create-streams',
+                'edit-streams',
+                'delete-streams',
+                
+                // Subject Management
+                'view-subjects',
+                'create-subjects',
+                'edit-subjects',
+                'delete-subjects',
+                
+                // Exam Management
+                'view-exams',
+                'create-exams',
+                'edit-exams',
+                'delete-exams',
+                
+                // Exam Results Management
+                'view-exam-results',
+                'enter-exam-results',
+                'delete-exam-results',
+                'view-all-results',
+                'generate-reports',
+                'export-results',
+                'import-results',
+                
+                // Attendance Management
+                'view-attendance',
+                'mark-attendance',
+                'edit-attendance',
+                'delete-attendance',
+                
+                // Grading System Management
+                'view-grading-systems',
+                'manage-grading-systems',
+                'activate-grading-system',
+            ])->get();
+            $headTeacherRole->permissions()->sync($headTeacherPermissions->pluck('id'));
+            $this->command->info('Assigned permissions to Head Teacher role.');
+        }
+
+        // Deputy Head Teacher permissions - Similar to Head Teacher but without deletion rights
+        $deputyHeadTeacherRole = Role::where('slug', 'deputy-head-teacher')->first();
+        if ($deputyHeadTeacherRole) {
+            $deputyHeadTeacherPermissions = Permission::whereIn('slug', [
+                // Student Management
+                'view-students',
+                'create-students',
+                'edit-students',
+                
+                // Teacher Management
+                'view-teachers',
+                'edit-teachers',
+                'assign-teacher-subjects',
+                'assign-teacher-streams',
+                
+                // Guardian Management
+                'view-guardians',
+                'create-guardians',
+                'edit-guardians',
+                
+                // Academic Year Management
+                'view-academic-years',
+                'edit-academic-years',
+                
+                // Class Management
+                'view-classes',
+                'create-classes',
+                'edit-classes',
+                
+                // Stream Management
+                'view-streams',
+                'create-streams',
+                'edit-streams',
+                
+                // Subject Management
+                'view-subjects',
+                'create-subjects',
+                'edit-subjects',
+                
+                // Exam Management
+                'view-exams',
+                'create-exams',
+                'edit-exams',
+                
+                // Exam Results Management
+                'view-exam-results',
+                'enter-exam-results',
+                'view-all-results',
+                'generate-reports',
+                'export-results',
+                'import-results',
+                
+                // Attendance Management
+                'view-attendance',
+                'mark-attendance',
+                'edit-attendance',
+                
+                // Grading System Management
+                'view-grading-systems',
+            ])->get();
+            $deputyHeadTeacherRole->permissions()->sync($deputyHeadTeacherPermissions->pluck('id'));
+            $this->command->info('Assigned permissions to Deputy Head Teacher role.');
+        }
+
         // Student permissions
         $studentRole = Role::where('slug', 'student')->first();
         if ($studentRole) {

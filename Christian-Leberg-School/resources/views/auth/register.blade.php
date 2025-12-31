@@ -2,7 +2,7 @@
     <!-- Header -->
     <div class="text-center mb-8">
         <h2 class="text-3xl font-bold text-slate-900 mb-2">Create Account</h2>
-        <p class="text-slate-600">Join the Christian Liebig Secondary School community</p>
+        <p class="text-slate-600">Join the {{ setting('site_name', 'School') }} community</p>
     </div>
 
     <form method="POST" action="{{ route('register') }}" class="space-y-6">

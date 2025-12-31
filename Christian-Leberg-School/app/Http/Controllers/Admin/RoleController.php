@@ -12,18 +12,24 @@ class RoleController extends Controller
 {
     public function index()
     {
+        $this->authorize('viewAny', Role::class);
+        
         $roles = Role::withCount(['users', 'permissions'])->orderBy('name')->get();
         return view('admin.roles.index', compact('roles'));
     }
 
     public function create()
     {
+        $this->authorize('create', Role::class);
+        
         $permissions = Permission::orderBy('name')->get();
         return view('admin.roles.create', compact('permissions'));
     }
 
     public function store(Request $request)
     {
+        $this->authorize('create', Role::class);
+        
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255', 'unique:roles,name'],
             'slug' => ['required', 'string', 'max:255', 'unique:roles,slug'],
@@ -48,12 +54,16 @@ class RoleController extends Controller
 
     public function show(Role $role)
     {
+        $this->authorize('view', $role);
+        
         $role->load(['permissions', 'users']);
         return view('admin.roles.show', compact('role'));
     }
 
     public function edit(Role $role)
     {
+        $this->authorize('update', $role);
+        
         $permissions = Permission::orderBy('name')->get();
         $role->load('permissions');
         return view('admin.roles.edit', compact('role', 'permissions'));
@@ -61,6 +71,8 @@ class RoleController extends Controller
 
     public function update(Request $request, Role $role)
     {
+        $this->authorize('update', $role);
+        
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255', 'unique:roles,name,' . $role->id],
             'slug' => ['required', 'string', 'max:255', 'unique:roles,slug,' . $role->id],
@@ -83,6 +95,8 @@ class RoleController extends Controller
 
     public function destroy(Role $role)
     {
+        $this->authorize('delete', $role);
+        
         // Prevent deletion of system roles
         if (in_array($role->slug, ['admin', 'teacher', 'student'])) {
             return back()->with('error', 'Cannot delete system role.');

@@ -93,22 +93,28 @@ class ExamController extends Controller
         
         $examTypes = \App\Models\ExamType::all();
         $gradingScales = \App\Models\GradingScale::all();
+        $assessmentStructures = \App\Models\AssessmentStructure::with('subject')->get();
         $subjects = \App\Models\Subject::orderBy('name')->get();
         $classes = SchoolClass::orderBy('name')->get();
         
-        return view('exams.create', compact('years', 'activeYear', 'terms', 'examTypes', 'gradingScales', 'subjects', 'classes'));
+        return view('exams.create', compact('years', 'activeYear', 'terms', 'examTypes', 'gradingScales', 'assessmentStructures', 'subjects', 'classes'));
     }
 
     public function store(Request $request)
     {
+        $this->authorize('create', Exam::class);
+        
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'academic_year_id' => ['required', 'exists:academic_years,id'],
             'exam_type_id' => ['nullable', 'exists:exam_types,id'],
             'grading_scale_id' => ['nullable', 'exists:grading_scales,id'],
+            'assessment_structure_id' => ['nullable', 'exists:assessment_structures,id'],
             'term_id' => ['required', 'exists:terms,id'],
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+            'results_entry_start_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'results_entry_end_date' => ['nullable', 'date', 'after_or_equal:results_entry_start_date'],
             'description' => ['nullable', 'string'],
             'subjects' => ['nullable', 'array'],
             'subjects.*' => ['exists:subjects,id'],
@@ -122,10 +128,15 @@ class ExamController extends Controller
             'academic_year_id' => $data['academic_year_id'],
             'exam_type_id' => $data['exam_type_id'] ?? null,
             'grading_scale_id' => $data['grading_scale_id'] ?? null,
+            'assessment_structure_id' => $data['assessment_structure_id'] ?? null,
             'term_id' => $data['term_id'],
             'start_date' => $data['start_date'],
             'end_date' => $data['end_date'],
+            'results_entry_start_date' => $data['results_entry_start_date'] ?? null,
+            'results_entry_end_date' => $data['results_entry_end_date'] ?? null,
             'description' => $data['description'] ?? null,
+            'is_major_exam' => true, // Major exams created by head teachers
+            'created_by' => auth()->id(),
         ]);
 
         // Attach subjects if selected
@@ -146,6 +157,8 @@ class ExamController extends Controller
 
     public function show(Exam $exam)
     {
+        $this->authorize('view', $exam);
+        
         $exam->load([
             'academicYear',
             'term',
@@ -195,10 +208,13 @@ class ExamController extends Controller
 
     public function edit(Exam $exam)
     {
+        $this->authorize('update', $exam);
+        
         $years = AcademicYear::with('terms')->orderBy('name', 'desc')->get();
         $activeYear = AcademicYear::where('is_active', true)->first();
         $examTypes = \App\Models\ExamType::all();
         $gradingScales = \App\Models\GradingScale::all();
+        $assessmentStructures = \App\Models\AssessmentStructure::with('subject')->get();
         $subjects = \App\Models\Subject::orderBy('name')->get();
         $classes = SchoolClass::orderBy('name')->get();
         
@@ -209,19 +225,24 @@ class ExamController extends Controller
         
         $exam->load('subjects', 'classes', 'term.academicYear');
         
-        return view('exams.edit', compact('exam', 'years', 'activeYear', 'terms', 'examTypes', 'gradingScales', 'subjects', 'classes'));
+        return view('exams.edit', compact('exam', 'years', 'activeYear', 'terms', 'examTypes', 'gradingScales', 'assessmentStructures', 'subjects', 'classes'));
     }
 
     public function update(Request $request, Exam $exam)
     {
+        $this->authorize('update', $exam);
+        
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'academic_year_id' => ['required', 'exists:academic_years,id'],
             'exam_type_id' => ['nullable', 'exists:exam_types,id'],
             'grading_scale_id' => ['nullable', 'exists:grading_scales,id'],
+            'assessment_structure_id' => ['nullable', 'exists:assessment_structures,id'],
             'term_id' => ['required', 'exists:terms,id'],
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+            'results_entry_start_date' => ['nullable', 'date', 'after_or_equal:start_date'],
+            'results_entry_end_date' => ['nullable', 'date', 'after_or_equal:results_entry_start_date'],
             'description' => ['nullable', 'string'],
             'subjects' => ['nullable', 'array'],
             'subjects.*' => ['exists:subjects,id'],
@@ -235,9 +256,12 @@ class ExamController extends Controller
             'academic_year_id' => $data['academic_year_id'],
             'exam_type_id' => $data['exam_type_id'] ?? null,
             'grading_scale_id' => $data['grading_scale_id'] ?? null,
+            'assessment_structure_id' => $data['assessment_structure_id'] ?? null,
             'term_id' => $data['term_id'],
             'start_date' => $data['start_date'],
             'end_date' => $data['end_date'],
+            'results_entry_start_date' => $data['results_entry_start_date'] ?? null,
+            'results_entry_end_date' => $data['results_entry_end_date'] ?? null,
             'description' => $data['description'] ?? null,
         ]);
 
@@ -263,6 +287,8 @@ class ExamController extends Controller
 
     public function destroy(Exam $exam)
     {
+        $this->authorize('delete', $exam);
+        
         $exam->update(['status' => 'inactive']);
         $exam->delete();
         return redirect()->route('exams.index')->with('success', 'Exam archived successfully. Status changed to inactive.');
@@ -271,6 +297,7 @@ class ExamController extends Controller
     public function restore($id)
     {
         $exam = Exam::withTrashed()->findOrFail($id);
+        $this->authorize('restore', $exam);
         $exam->restore();
         $exam->update(['status' => 'active']);
         return redirect()->route('exams.index')->with('success', 'Exam restored successfully. Status changed to active.');
@@ -281,6 +308,8 @@ class ExamController extends Controller
      */
     public function componentBreakdown(Exam $exam)
     {
+        $this->authorize('view', $exam);
+        
         $exam->load(['academicYear', 'term', 'assessmentStructure.components']);
         
         // Get all students for this exam
@@ -306,6 +335,8 @@ class ExamController extends Controller
 
     public function report(Exam $exam)
     {
+        $this->authorize('viewReports', $exam);
+        
         // Students with insufficient subjects
         $insufficient = $exam->studentsWithInsufficientSubjects(4);
         $sufficient = $exam->studentsWithSufficientSubjects(4);
@@ -339,17 +370,7 @@ class ExamController extends Controller
 
     public function classReport(Exam $exam, SchoolClass $class)
     {
-        $user = auth()->user();
-
-        // Only admin or class teacher may generate class reports
-        if (! $user->hasRole('admin')) {
-            // check if teacher is class teacher for any stream in this class for this academic year
-            $isClassTeacher = $class->streams()->where('streams.academic_year_id', $exam->academic_year_id)->get()->contains(function ($stream) use ($user) {
-                return $stream->class_teacher?->id === $user->teacher?->id;
-            });
-
-            if (! $isClassTeacher) abort(403);
-        }
+        $this->authorize('viewReports', $exam);
 
         // students in this class and academic year
         $students = Student::whereHas('streams', function ($q) use ($class, $exam) {
@@ -361,6 +382,8 @@ class ExamController extends Controller
 
     public function classReportPdf(Exam $exam, SchoolClass $class)
     {
+        $this->authorize('viewReports', $exam);
+        
         // Render the HTML report and convert to PDF if Dompdf is available
         $html = view('exams.class_report', ['exam' => $exam, 'class' => $class, 'students' => Student::whereHas('streams', function ($q) use ($class, $exam) {
             $q->where('class_id', $class->id)->where('student_stream.academic_year_id', $exam->academic_year_id)->where('student_stream.is_active', true);
@@ -381,11 +404,8 @@ class ExamController extends Controller
     public function studentReportPdf(Exam $exam, Student $student)
     {
         try {
-            $user = auth()->user();
-            if (! $user->hasRole('admin') && $user->id !== $student->user_id) {
-                $teacherOk = $user->teacher && $student->examResults()->where('exam_id', $exam->id)->whereIn('subject_id', $user->teacher->subjects()->pluck('subjects.id'))->exists();
-                if (! $teacherOk) abort(403);
-            }
+            $this->authorize('viewReports', $exam);
+            $this->authorize('view', $student);
 
             $data = $this->buildStudentReportData($exam, $student);
 
@@ -439,11 +459,8 @@ class ExamController extends Controller
 
     public function studentReport(Exam $exam, Student $student)
     {
-        $user = auth()->user();
-        if (! $user->hasRole('admin') && $user->id !== $student->user_id) {
-            $teacherOk = $user->teacher && $student->examResults()->where('exam_id', $exam->id)->whereIn('subject_id', $user->teacher->subjects()->pluck('subjects.id'))->exists();
-            if (! $teacherOk) abort(403);
-        }
+        $this->authorize('viewReports', $exam);
+        $this->authorize('view', $student);
 
         $data = $this->buildStudentReportData($exam, $student);
         return view('exams.student_report', $data);
@@ -454,11 +471,8 @@ class ExamController extends Controller
      */
     public function reportCard(Exam $exam, Student $student)
     {
-        $user = auth()->user();
-        if (! $user->hasRole('admin') && $user->id !== $student->user_id) {
-            $teacherOk = $user->teacher && $student->examResults()->where('exam_id', $exam->id)->whereIn('subject_id', $user->teacher->subjects()->pluck('subjects.id'))->exists();
-            if (! $teacherOk) abort(403);
-        }
+        $this->authorize('viewReports', $exam);
+        $this->authorize('view', $student);
 
         $data = $this->buildStudentReportData($exam, $student);
         return view('exams.report_card', $data);
@@ -567,6 +581,8 @@ class ExamController extends Controller
      */
     public function releaseResults(Exam $exam)
     {
+        $this->authorize('releaseResults', $exam);
+        
         $exam->update([
             'results_released' => true,
             'results_released_at' => now(),
@@ -581,6 +597,8 @@ class ExamController extends Controller
      */
     public function withdrawResults(Exam $exam)
     {
+        $this->authorize('withdrawResults', $exam);
+        
         $exam->update([
             'results_released' => false,
             'results_released_at' => null,
@@ -595,6 +613,8 @@ class ExamController extends Controller
      */
     public function manageStudentAccess(Request $request, Exam $exam)
     {
+        $this->authorize('manageStudentAccess', $exam);
+        
         $request->validate([
             'student_ids' => 'required|array',
             'student_ids.*' => 'exists:students,id',

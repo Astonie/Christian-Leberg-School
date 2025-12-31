@@ -117,6 +117,39 @@
                                 <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">End Date</p>
                                 <p class="text-lg font-bold text-gray-900">{{ $exam->end_date->format('M d, Y') }}</p>
                             </div>
+                            
+                            @if($exam->results_entry_start_date && $exam->results_entry_end_date)
+                                <div class="md:col-span-2">
+                                    @php
+                                        $status = $exam->getResultsEntryStatus();
+                                    @endphp
+                                    <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Results Entry Period</p>
+                                    <div class="flex items-center gap-4">
+                                        <div class="flex-1">
+                                            <p class="text-gray-900 font-medium">
+                                                {{ $exam->results_entry_start_date->format('M d, Y') }} - {{ $exam->results_entry_end_date->format('M d, Y') }}
+                                            </p>
+                                        </div>
+                                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold
+                                            @if($status['status'] === 'open') bg-green-100 text-green-800
+                                            @elseif($status['status'] === 'locked') bg-red-100 text-red-800
+                                            @elseif($status['status'] === 'pending') bg-yellow-100 text-yellow-800
+                                            @else bg-gray-100 text-gray-800
+                                            @endif">
+                                            @if($status['status'] === 'open')
+                                                🟢 {{ $status['message'] }}
+                                            @elseif($status['status'] === 'locked')
+                                                🔒 {{ $status['message'] }}
+                                            @elseif($status['status'] === 'pending')
+                                                ⏱️ {{ $status['message'] }}
+                                            @else
+                                                {{ $status['message'] }}
+                                            @endif
+                                        </span>
+                                    </div>
+                                </div>
+                            @endif
+                            
                             @if($exam->examType)
                                 <div>
                                     <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Exam Type</p>
@@ -127,6 +160,17 @@
                                 <div>
                                     <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Grading Scale</p>
                                     <p class="text-lg font-bold text-gray-900">{{ $exam->gradingScale->name }}</p>
+                                </div>
+                            @endif
+                            @if($exam->assessmentStructure)
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Assessment Structure</p>
+                                    <p class="text-lg font-bold text-gray-900">
+                                        {{ $exam->assessmentStructure->name }}
+                                        @if($exam->assessmentStructure->subject)
+                                            <span class="text-sm text-gray-600">({{ $exam->assessmentStructure->subject->name }})</span>
+                                        @endif
+                                    </p>
                                 </div>
                             @endif
                         </div>

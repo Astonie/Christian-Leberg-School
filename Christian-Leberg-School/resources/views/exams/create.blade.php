@@ -136,8 +136,35 @@
                         </div>
                     </div>
 
+                    <!-- Results Entry Period -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-200">
+                        <div>
+                            <label for="results_entry_start_date" class="block text-sm font-bold text-gray-900 mb-2">
+                                Results Entry Start Date
+                            </label>
+                            <input type="date" id="results_entry_start_date" name="results_entry_start_date" value="{{ old('results_entry_start_date') }}"
+                                class="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                            @error('results_entry_start_date')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                            <p class="mt-1 text-xs text-gray-500">When teachers can start entering results</p>
+                        </div>
+
+                        <div>
+                            <label for="results_entry_end_date" class="block text-sm font-bold text-gray-900 mb-2">
+                                Results Entry Deadline
+                            </label>
+                            <input type="date" id="results_entry_end_date" name="results_entry_end_date" value="{{ old('results_entry_end_date') }}"
+                                class="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                            @error('results_entry_end_date')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                            <p class="mt-1 text-xs text-gray-500">After this date, system locks and teachers cannot enter/edit marks</p>
+                        </div>
+                    </div>
+
                     <!-- Description -->
-                    <div>
+                    <div class="pt-6">
                         <label for="description" class="block text-sm font-bold text-gray-900 mb-2">
                             Description
                         </label>
@@ -222,31 +249,56 @@
             </div>
 
             <!-- Grading Configuration -->
-            @if($gradingScales->isNotEmpty())
+            @if($gradingScales->isNotEmpty() || $assessmentStructures->isNotEmpty())
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-6">
                     <div class="bg-gradient-to-r from-orange-50 to-orange-100 px-6 py-4 border-b border-orange-200">
                         <h3 class="text-lg font-bold text-orange-900 flex items-center">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                             </svg>
-                            Grading Scale
+                            Grading Configuration
                         </h3>
                     </div>
 
-                    <div class="p-6">
-                        <label for="grading_scale_id" class="block text-sm font-bold text-gray-900 mb-2">
-                            Select Grading Scale
-                        </label>
-                        <select name="grading_scale_id" id="grading_scale_id"
-                            class="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all">
-                            <option value="">Use Default Scale</option>
-                            @foreach($gradingScales as $scale)
-                                <option value="{{ $scale->id }}" {{ old('grading_scale_id') == $scale->id ? 'selected' : '' }}>
-                                    {{ $scale->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <p class="mt-2 text-sm text-gray-600">Optional: Choose a specific grading scale for this examination</p>
+                    <div class="p-6 space-y-6">
+                        @if($gradingScales->isNotEmpty())
+                        <div>
+                            <label for="grading_scale_id" class="block text-sm font-bold text-gray-900 mb-2">
+                                Grading Scale
+                            </label>
+                            <select name="grading_scale_id" id="grading_scale_id"
+                                class="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all">
+                                <option value="">Use Default Scale</option>
+                                @foreach($gradingScales as $scale)
+                                    <option value="{{ $scale->id }}" {{ old('grading_scale_id') == $scale->id ? 'selected' : '' }}>
+                                        {{ $scale->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <p class="mt-2 text-sm text-gray-600">Optional: Choose a specific grading scale (A-F, 1-7, etc.) for this examination</p>
+                        </div>
+                    @endif
+
+                    @if($assessmentStructures->isNotEmpty())
+                        <div>
+                            <label for="assessment_structure_id" class="block text-sm font-bold text-gray-900 mb-2">
+                                Assessment Structure
+                            </label>
+                            <select name="assessment_structure_id" id="assessment_structure_id"
+                                class="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all">
+                                <option value="">No Assessment Structure</option>
+                                @foreach($assessmentStructures as $structure)
+                                    <option value="{{ $structure->id }}" {{ old('assessment_structure_id') == $structure->id ? 'selected' : '' }}>
+                                        {{ $structure->name }} @if($structure->subject)({{ $structure->subject->name }})@endif
+                                    </option>
+                                @endforeach
+                            </select>
+                            <p class="mt-2 text-sm text-gray-600">
+                                <strong>Optional:</strong> Defines how marks are broken down (e.g., 40% Continuous Assessment + 60% Final Exam). 
+                                This structure will be used when entering and calculating marks for this examination.
+                            </p>
+                        </div>
+                        @endif
                     </div>
                 </div>
             @endif

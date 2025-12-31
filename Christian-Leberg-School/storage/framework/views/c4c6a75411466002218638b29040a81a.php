@@ -126,6 +126,44 @@
                                 <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">End Date</p>
                                 <p class="text-lg font-bold text-gray-900"><?php echo e($exam->end_date->format('M d, Y')); ?></p>
                             </div>
+                            
+                            <?php if($exam->results_entry_start_date && $exam->results_entry_end_date): ?>
+                                <div class="md:col-span-2">
+                                    <?php
+                                        $status = $exam->getResultsEntryStatus();
+                                    ?>
+                                    <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Results Entry Period</p>
+                                    <div class="flex items-center gap-4">
+                                        <div class="flex-1">
+                                            <p class="text-gray-900 font-medium">
+                                                <?php echo e($exam->results_entry_start_date->format('M d, Y')); ?> - <?php echo e($exam->results_entry_end_date->format('M d, Y')); ?>
+
+                                            </p>
+                                        </div>
+                                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold
+                                            <?php if($status['status'] === 'open'): ?> bg-green-100 text-green-800
+                                            <?php elseif($status['status'] === 'locked'): ?> bg-red-100 text-red-800
+                                            <?php elseif($status['status'] === 'pending'): ?> bg-yellow-100 text-yellow-800
+                                            <?php else: ?> bg-gray-100 text-gray-800
+                                            <?php endif; ?>">
+                                            <?php if($status['status'] === 'open'): ?>
+                                                🟢 <?php echo e($status['message']); ?>
+
+                                            <?php elseif($status['status'] === 'locked'): ?>
+                                                🔒 <?php echo e($status['message']); ?>
+
+                                            <?php elseif($status['status'] === 'pending'): ?>
+                                                ⏱️ <?php echo e($status['message']); ?>
+
+                                            <?php else: ?>
+                                                <?php echo e($status['message']); ?>
+
+                                            <?php endif; ?>
+                                        </span>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                            
                             <?php if($exam->examType): ?>
                                 <div>
                                     <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Exam Type</p>
@@ -136,6 +174,18 @@
                                 <div>
                                     <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Grading Scale</p>
                                     <p class="text-lg font-bold text-gray-900"><?php echo e($exam->gradingScale->name); ?></p>
+                                </div>
+                            <?php endif; ?>
+                            <?php if($exam->assessmentStructure): ?>
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Assessment Structure</p>
+                                    <p class="text-lg font-bold text-gray-900">
+                                        <?php echo e($exam->assessmentStructure->name); ?>
+
+                                        <?php if($exam->assessmentStructure->subject): ?>
+                                            <span class="text-sm text-gray-600">(<?php echo e($exam->assessmentStructure->subject->name); ?>)</span>
+                                        <?php endif; ?>
+                                    </p>
                                 </div>
                             <?php endif; ?>
                         </div>
